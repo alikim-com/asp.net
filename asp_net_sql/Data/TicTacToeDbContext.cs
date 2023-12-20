@@ -15,4 +15,12 @@ internal class TicTacToeDbContext : DbContext
     public TicTacToeDbContext(DbContextOptions<TicTacToeDbContext> options) : base(options)
     {
     }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<RowRoster>()
+            .HasOne(x => x.RowRosterEnum)
+            .WithOne(x => x.RowRoster)
+            .HasPrincipalKey<RowRosterEnum>(x => x.UniColumn);
+    }
 }

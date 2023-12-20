@@ -9,7 +9,7 @@ internal class Engine
     static internal void Log(string msg)
     {
         double elapsedSec = (stopwatch == null) ? 0 : stopwatch.Elapsed.TotalSeconds;
-        Debug.WriteLine(elapsedSec.ToString("0.00") + " " + msg);
+        Debug.WriteLine(elapsedSec.ToString("0.000") + " " + msg);
     }
 
     internal BlockingCollection<int> dataQueue;
@@ -38,7 +38,6 @@ internal class Engine
 
 internal class Producer
 {
-
     internal BlockingCollection<int> dataQueue;
 
     internal Producer(BlockingCollection<int> _dataQueue)
@@ -59,8 +58,10 @@ internal class Producer
             Thread.Sleep(2000);
             Engine.Log($"Producer awake");
         }
-    }
 
+        Engine.Log("Producer closed");
+        dataQueue.CompleteAdding();
+    }
 }
 
 internal class MessageLoop
@@ -80,8 +81,10 @@ internal class MessageLoop
         {
             Engine.Log($"Consumed: {item}");
             Engine.Log($"Consumer asleep");
-            Thread.Sleep(4000);
+            Thread.Sleep(4000); Task.Delay(4000);
             Engine.Log($"Consumer awake");
         }
+
+        Engine.Log("Consumer closed");
     }
 }

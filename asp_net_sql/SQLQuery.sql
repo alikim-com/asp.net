@@ -31,16 +31,16 @@ use test
 
 CREATE TABLE ParentTable (
     ParentID INT PRIMARY KEY,
-	UniColumn INT
+	UniColumn INT UNIQUE
 );
-
-ALTER TABLE ParentTable
-ADD CONSTRAINT UNIQUE_ParentTable_UniColumn UNIQUE (UniColumn)
 
 CREATE TABLE ChildTable (
     ChildID INT PRIMARY KEY,
     ParentID INT,
     FOREIGN KEY (ParentID) REFERENCES ParentTable(UniColumn)
 );
+
+ALTER TABLE ParentTable
+ADD CONSTRAINT UNIQUE_ParentTable_UniColumn UNIQUE (UniColumn)
 
 use master
