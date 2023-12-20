@@ -1,5 +1,7 @@
-using asp_net_sql.Data;
 using Microsoft.EntityFrameworkCore;
+
+using asp_net_sql.Data;
+using asp_net_sql.GameEngine;
 
 namespace asp_net_sql;
 
@@ -9,11 +11,10 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Add services to the container.
         builder.Services.AddRazorPages();
 
         builder.Services.AddDbContext<TicTacToeDbContext>(options =>
-           options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+           options.UseSqlServer(builder.Configuration.GetConnectionString("SQLExpressConnection")));
 
         var app = builder.Build();
 
@@ -33,6 +34,9 @@ public class Program
         app.UseAuthorization();
 
         app.MapRazorPages();
+
+        var game = new Engine();
+        game.Start();
 
         app.Run();
     }
