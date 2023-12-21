@@ -9,6 +9,9 @@ GROUP BY
     dbid
 
 
+CREATE DATABASE TicTacToe;
+use TicTacToe;
+
 DROP DATABASE TicTacToe;
 
 ALTER DATABASE TicTacToe
@@ -27,20 +30,40 @@ FROM
 WHERE
     database_id = DB_ID('master');
 
-use test
 
 CREATE TABLE ParentTable (
-    ParentID INT PRIMARY KEY,
-	UniColumn INT UNIQUE
+    ParentID INT NOT NULL,
+	UniColumn INT NOT NULL
 );
 
 CREATE TABLE ChildTable (
-    ChildID INT PRIMARY KEY,
-    ParentID INT,
-    FOREIGN KEY (ParentID) REFERENCES ParentTable(UniColumn)
+    ChildID INT NOT NULL,
 );
 
 ALTER TABLE ParentTable
-ADD CONSTRAINT UNIQUE_ParentTable_UniColumn UNIQUE (UniColumn)
+ADD CONSTRAINT PK_PT_ParentID 
+PRIMARY KEY (ParentID)
 
-use master
+ALTER TABLE ParentTable
+ADD CONSTRAINT UQ_PT_UniColumn 
+UNIQUE (UniColumn)
+
+ALTER TABLE ChildTable
+ADD CONSTRAINT PK_CT_ChildID
+PRIMARY KEY (ChildID)
+
+ALTER TABLE ChildTable
+ADD CONSTRAINT FK_ChildID__PT_UniColumn 
+FOREIGN KEY (ChildID) REFERENCES ParentTable(UniColumn)
+
+use master;
+
+use TicTacToe;
+
+select * from ParentTable;
+
+select * from ChildTable;
+
+insert into ParentTable (ParentID, UniColumn) values (1, 10), (2, 11), (3, 12)
+
+delete from ParentTable where UniColumn = 10
