@@ -67,3 +67,5 @@ select * from ChildTable;
 insert into ParentTable (ParentID, UniColumn) values (1, 10), (2, 11), (3, 12)
 
 delete from ParentTable where UniColumn = 10
+
+ALTER DATABASE TicTacToe MODIFY NAME = TicTacToe_Blueprint;
