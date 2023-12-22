@@ -25,27 +25,78 @@ CONSTRAINT FK_MnS_ID__MnS_ParentID FOREIGN KEY (ParentID) REFERENCES MenuStrings
 ---- enums ----
 
 CREATE TABLE EnumGameRoster(
-	ID INT IDENTITY(1,1),
+	ID INT,
 	Origin VARCHAR(64) NOT NULL,
 	IDX INT NOT NULL,
 	[Identity] NVARCHAR(64) NOT NULL,
 );
 ALTER TABLE EnumGameRoster ADD
 CONSTRAINT PK_EGR_ID PRIMARY KEY (ID),
-CONSTRAINT UQ_EGR_Iden UNIQUE ([Identity]),
-CHECK (Origin IN ('Human', 'AI'));
+CONSTRAINT UQ_EGR_Ent UNIQUE (Origin, IDX),
+CHECK (Origin IN ('None', 'Human', 'AI'));
+
+CREATE TABLE EnumGameStates(
+	ID INT,
+    [Value] NVARCHAR(64) NOT NULL,
+);
+ALTER TABLE EnumGameStates ADD
+CONSTRAINT PK_EGS_ID PRIMARY KEY (ID);
 
 ---- game state ----
 
-{"Name":"AI","Board":[0,4,0,4,1,0,0,1,0],"TurnList":[1,4],"State":1,"TurnWheelHead":0,"Chosen":[{"RosterId":1,"IdentityName":"Ironheart","side":1,"OriginType":"Human"},{"RosterId":4,"IdentityName":"Syncstorm","side":2,"OriginType":"AI"}]}
+CREATE TABLE Games(
+	ID VARCHAR(1024), -- SHA-512 cookie
+	[Name] NVARCHAR(64) NOT NULL,
+	[State] INT,
+	TurnWheelHead INT NOT NULL,
+);
+ALTER TABLE Games ADD
+CONSTRAINT PK_Gms_ID PRIMARY KEY (ID),
+CONSTRAINT FK_Gms_ID__EGS_Val FOREIGN KEY ([State]) REFERENCES EnumGameStates(ID);
+
+CREATE TABLE Chosen(
+	RosterId,
+	Identity,
+	Side,
+	Origin
+);
+
+
+CREATE TABLE GameBoard (
+	[Row] INT IDENTITY(1,1),
+    Col1 INT,
+    Col2 INT,
+    Col3 INT,
+);
+ALTER TABLE GameBoard ADD
+CONSTRAINT PK_GBr_ID PRIMARY KEY ([Row]),
+CONSTRAINT FK_GBr_Col1__EGR_ID FOREIGN KEY (Col1) REFERENCES EnumGameRoster(ID),
+CONSTRAINT FK_GBr_Col2__EGR_ID FOREIGN KEY (Col2) REFERENCES EnumGameRoster(ID),
+CONSTRAINT FK_GBr_Col3__EGR_ID FOREIGN KEY (Col3) REFERENCES EnumGameRoster(ID);
+
+
+
+"Chosen":[{"RosterId":1,"IdentityName":"Ironheart","side":1,"OriginType":"Human"},{"RosterId":4,"IdentityName":"Syncstorm","side":2,"OriginType":"AI"}]}
 
 ---- DATA ----
 
-INSERT INTO EnumGameRoster (Origin, IDX, [Identity]) VALUES
-('Human', 1, N'Ironheart'),
-('Human', 2, N'Silverlight'),
-('AI', 1, N'Quantum'),
-('AI', 2, N'Syncstorm');
+INSERT INTO EnumGameStates ([Value]) VALUES
+(N'Countdown'),
+(N'Started'),
+(N'Won'),
+(N'Tie');
+
+INSERT INTO EnumGameRoster (ID, Origin, IDX, [Identity]) VALUES
+(0, 'None', 1, N'None'),
+(1, 'Human', 1, N'Ironheart'),
+(2, 'Human', 2, N'Silverlight'),
+(3, 'AI', 1, N'Quantum'),
+(4, 'AI', 2, N'Syncstorm');
+
+INSERT INTO GameBoard (Col1, Col2, Col3) VALUES
+(0, 0, 0),
+(0, 0, 0),
+(0, 0, 0);
 
 INSERT INTO MenuStrings (ParentID, IDX, [Value]) VALUES
 
