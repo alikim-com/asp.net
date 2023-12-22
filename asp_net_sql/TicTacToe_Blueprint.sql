@@ -1,18 +1,71 @@
 CREATE DATABASE TicTacToe_Blueprint;
+
 USE TicTacToe_Blueprint;
 
-CREATE TABLE Resx_Strings(
-	Id INT PRIMARY KEY IDENTITY(1,1),
+---- language specific strings ----
+
+CREATE TABLE ResxStrings(
+	ID INT IDENTITY(1,1),
 	[Name] NVARCHAR(64),
 	[Value] NVARCHAR(2048)
 );
+ALTER TABLE ResxStrings ADD
+CONSTRAINT PK_RxS_ID PRIMARY KEY (ID);
 
+CREATE TABLE MenuStrings(
+	ID INT IDENTITY(1,1),
+	ParentID INT,
+	IDX INT NOT NULL,
+	[Value] NVARCHAR(2048)
+);
+ALTER TABLE MenuStrings ADD
+CONSTRAINT PK_MnS_ID PRIMARY KEY (ID),
+CONSTRAINT FK_MnS_ID__MnS_ParentID FOREIGN KEY (ParentID) REFERENCES MenuStrings(ID);
+
+---- enums ----
+
+CREATE TABLE EnumGameRoster(
+	ID INT IDENTITY(1,1),
+	Origin VARCHAR(64) NOT NULL,
+	IDX INT NOT NULL,
+	[Identity] NVARCHAR(64) NOT NULL,
+);
+ALTER TABLE EnumGameRoster ADD
+CONSTRAINT PK_EGR_ID PRIMARY KEY (ID),
+CONSTRAINT UQ_EGR_Iden UNIQUE ([Identity]),
+CHECK (Origin IN ('Human', 'AI'));
+
+---- game state ----
+
+{"Name":"AI","Board":[0,4,0,4,1,0,0,1,0],"TurnList":[1,4],"State":1,"TurnWheelHead":0,"Chosen":[{"RosterId":1,"IdentityName":"Ironheart","side":1,"OriginType":"Human"},{"RosterId":4,"IdentityName":"Syncstorm","side":2,"OriginType":"AI"}]}
 
 ---- DATA ----
 
-INSERT INTO Resx_Strings
-([Name], [Value]) VALUES
-('About', 
+INSERT INTO EnumGameRoster (Origin, IDX, [Identity]) VALUES
+('Human', 1, N'Ironheart'),
+('Human', 2, N'Silverlight'),
+('AI', 1, N'Quantum'),
+('AI', 2, N'Syncstorm');
+
+INSERT INTO MenuStrings (ParentID, IDX, [Value]) VALUES
+
+(NULL, 1, N'Load'),
+(NULL, 2, N'Save'),
+(NULL, 3, N'Help'),
+(NULL, 4, N'Game name:'),
+
+(1, 1, N'Open saved game...'),
+(1, 2, N'Saved games'),
+
+(2, 1, N'Save game as...'),
+
+(3, 1, N'About');
+
+INSERT INTO ResxStrings ([Name], [Value]) VALUES
+('Title', N'Tic-Tac-Toe'),
+('DefaultGameName', N'Default'),
+('MenuHelpAboutButton', N'Leave the narrative'),
+('MenuHelpAboutContent', 
 N'About
 ***
 Boop The Snoop For Fun And Profit is an open-source initiative aimed at finding Uncle Serge a job. We believe in the power of collaboration and community-driven development.
@@ -34,3 +87,4 @@ https://github.com/alikim-com/tafe
 for more information.
 
 Thank you for being part of our open-source community!');
+

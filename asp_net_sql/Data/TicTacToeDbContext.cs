@@ -9,10 +9,13 @@ namespace asp_net_sql.Data;
 /// 
 /// creates this file along with table models from existing SQL
 /// > dotnet ef dbcontext scaffold "Name=ConnectionStrings:SQLExpressConnection" Microsoft.EntityFrameworkCore.SqlServer --use-database-names -o ScaffoldModels
+/// 
 /// creates Migration folder with files out of Models classes and this one
 /// > dotnet ef migrations add InitialCreate
+/// 
 /// applies migration files
 /// > dotnet ef database update
+/// 
 /// </summary>
 internal partial class TicTacToeDbContext : DbContext
 {
