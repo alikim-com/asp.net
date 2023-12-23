@@ -1,9 +1,8 @@
 ﻿using System.Reflection.Emit;
 using System.Reflection;
+using System.Dynamic;
 
 namespace test_enum;
-
-public interface IEnum { }
 
 //internal class ClsEnumType1 : IEnum
 //{
@@ -39,6 +38,15 @@ internal class Program
         // Test1
         // Test2
 
+        dynamic eo = new ExpandoObject();
+
+        if (eo is IDictionary<string, object?> idict)
+        {
+            idict["new_prop"] = 2;
+            Console.WriteLine($"eo.new_prop: {eo.new_prop}");
+        }
+
+
         //var enumType1Value = new ClsEnumType1(ClsEnumType1.EnumValue);
         //var enumType2Value = new ClsEnumType2(ClsEnumType2.EnumValue);
 
@@ -52,12 +60,86 @@ internal class Program
         //Console.WriteLine(dict2[enumType2Value]);
 
 
-        Type ClsEnumType1 = DynamicType.GenerateEnumClass("DynamicEnums", "ClsEnumType1", "EnumValue", 0);
+        //Type ClsEnumType1 = DynamicType.GenerateEnumClass("DynamicEnums", "ClsEnumType1", "EnumValue", 0);
 
-        object? instance = DynamicType.CreateInstance(ClsEnumType1, 42);
+        //object? instance = DynamicType.CreateInstance(ClsEnumType1, 42);
 
-        Console.WriteLine(instance?.GetType().Name);  // Output: ClsEnumType1
+        //Console.WriteLine(instance?.GetType().Name);  // Output: ClsEnumType1
+
+        SomeEnum.Init(new Dictionary<string, int>
+        {
+            { "None", 0 },
+            { "AI", 1},
+            { "Human", 2}
+        });
+        
+        var someEnum = new SomeEnum(SomeEnum.v.AI);
+        Console.WriteLine(someEnum);
+
+        someEnum.Value = SomeEnum.v.Human;
+        Console.WriteLine(someEnum);
     }
+
+}
+
+internal interface IEnum { }
+
+public class SomeEnum : IEnum
+{
+    static internal readonly dynamic v = new ExpandoObject();
+
+    // to dynamically create properties from strings on v
+    static readonly IDictionary<string, object?> iDict = (v as IDictionary<string, object?>)!;
+
+    // to avoid boxing/unboxing while checking existing key/values
+    static readonly Dictionary<string, int> dict = new();
+
+    static internal void Init(Dictionary<string, int> _dict)
+    {
+        foreach (var (k, v) in _dict)
+        {
+            iDict[k] = v;
+            dict[k] = v;
+        }
+    }
+
+    string _name = "";
+    int _value;
+
+    internal string Name {
+        get => _name;
+        set
+        {
+            if (!dict.ContainsKey(value)) 
+                throw new NotImplementedException($"SomeEnum.Name.set : '{value}' not present in dictionary");
+            _name = value;
+            _value = dict[value];
+        }
+    }
+
+    internal int Value
+    {
+        get => _value;
+        set
+        {
+            var name = dict.FirstOrDefault(p => p.Value == value).Key ?? 
+                throw new NotImplementedException($"SomeEnum.Value.set : '{value}' not present in dictionary");
+            _name = name;
+            _value = value;
+        }
+    }
+
+    internal SomeEnum(int _value)
+    {
+        Value = _value;
+    }
+
+    internal SomeEnum(string _name)
+    {
+        Name = _name;
+    }
+
+    public override string ToString() => $"Name: {Name}, Value: {Value}";
 
 }
 
