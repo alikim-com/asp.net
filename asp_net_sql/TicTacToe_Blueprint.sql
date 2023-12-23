@@ -2,7 +2,7 @@ CREATE DATABASE TicTacToe_Blueprint;
 
 USE TicTacToe_Blueprint;
 
----- language specific strings ----
+---- common strings ----
 
 CREATE TABLE ResxStrings(
 	ID INT IDENTITY(1,1),
@@ -24,6 +24,13 @@ CONSTRAINT FK_MnS_ID__MnS_ParentID FOREIGN KEY (ParentID) REFERENCES MenuStrings
 
 ---- enums ----
 
+CREATE TABLE EnumBtnMsg(
+	ID INT,
+	[Value] NVARCHAR(64) NOT NULL,
+);
+ALTER TABLE EnumBtnMsg ADD
+CONSTRAINT PK_EBM_ID PRIMARY KEY (ID);
+
 CREATE TABLE EnumGameRoster(
 	ID INT,
 	Origin VARCHAR(64) NOT NULL,
@@ -42,7 +49,15 @@ CREATE TABLE EnumGameStates(
 ALTER TABLE EnumGameStates ADD
 CONSTRAINT PK_EGS_ID PRIMARY KEY (ID);
 
----- game state ----
+CREATE TABLE EnumUISides(
+	ID INT,
+    [Value] NVARCHAR(64) NOT NULL,
+);
+ALTER TABLE EnumUISides ADD
+CONSTRAINT PK_EUS_ID PRIMARY KEY (ID),
+CHECK ([Value] IN ('None', 'Left', 'Right'));
+
+---- persistent game state ----
 
 CREATE TABLE Games(
 	ID VARCHAR(1024), -- SHA-512 cookie
@@ -55,12 +70,17 @@ CONSTRAINT PK_Gms_ID PRIMARY KEY (ID),
 CONSTRAINT FK_Gms_ID__EGS_Val FOREIGN KEY ([State]) REFERENCES EnumGameStates(ID);
 
 CREATE TABLE Chosen(
-	RosterId,
-	Identity,
-	Side,
-	Origin
+	RosterID INT,
+	[Identity] NVARCHAR(64) NOT NULL,
+	UISide INT,
+	Origin VARCHAR(64) NOT NULL,
 );
-
+ALTER TABLE Chosen ADD
+CONSTRAINT PK_Chn_RID PRIMARY KEY (RosterID),
+CONSTRAINT FK_EGR_ID__Chn_RID FOREIGN KEY (RosterID) REFERENCES EnumGameRoster(ID),
+CONSTRAINT FK_EGR_Idn__Chn_Idn FOREIGN KEY ([Identity]) REFERENCES EnumGameRoster([Identity]),
+CONSTRAINT FK_EUS_Val__Chn_USd FOREIGN KEY (UISide) REFERENCES EnumUISides(ID),
+CONSTRAINT FK_EGR_Orn__Chn_Orn FOREIGN KEY (Origin) REFERENCES EnumGameRoster(Origin);
 
 CREATE TABLE GameBoard (
 	[Row] INT IDENTITY(1,1),
@@ -74,11 +94,23 @@ CONSTRAINT FK_GBr_Col1__EGR_ID FOREIGN KEY (Col1) REFERENCES EnumGameRoster(ID),
 CONSTRAINT FK_GBr_Col2__EGR_ID FOREIGN KEY (Col2) REFERENCES EnumGameRoster(ID),
 CONSTRAINT FK_GBr_Col3__EGR_ID FOREIGN KEY (Col3) REFERENCES EnumGameRoster(ID);
 
-
-
-"Chosen":[{"RosterId":1,"IdentityName":"Ironheart","side":1,"OriginType":"Human"},{"RosterId":4,"IdentityName":"Syncstorm","side":2,"OriginType":"AI"}]}
-
 ---- DATA ----
+
+INSERT INTO EnumBtnMsg ([Value]) VALUES
+(N'Ready_AI'),
+(N'Ready_Human'),
+(N'Ready_Mix'),
+(N'Both_Missing'),
+(N'Left_Missing'),
+(N'Right_Missing');
+
+INSERT INTO ResxStrings ([Name], [Value]) VALUES
+(N'Ready_AI', N'I like to watch...o_o'),
+(N'Ready_Human', N'Fight, Mortals!'),
+(N'Ready_Mix', N'For the Organics!'),
+(N'Both_Missing', N'Choose players'),
+(N'Left_Missing', N'Choose left player'),
+(N'Right_Missing', N'Choose right player');
 
 INSERT INTO EnumGameStates ([Value]) VALUES
 (N'Countdown'),
