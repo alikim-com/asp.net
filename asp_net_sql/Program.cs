@@ -1,7 +1,6 @@
-using Microsoft.EntityFrameworkCore;
-
 using asp_net_sql.Data;
 using asp_net_sql.GameEngine;
+using Microsoft.EntityFrameworkCore;
 
 namespace asp_net_sql;
 
@@ -13,7 +12,7 @@ public class Program
 
         builder.Services.AddRazorPages();
 
-        builder.Services.AddDbContext<TicTacToeDbContext>(options =>
+        builder.Services.AddDbContext<TicTacToe_Context>(options =>
            options.UseSqlServer(builder.Configuration.GetConnectionString("SQLExpressConnection")));
 
         var app = builder.Build();

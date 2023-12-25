@@ -1,3 +1,5 @@
+use master;
+
 SELECT
     DB_NAME(dbid) as 'Database name',
     COUNT(dbid) as 'Number of Connections'

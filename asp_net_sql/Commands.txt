@@ -1,0 +1,24 @@
+﻿ 
+CMD COMMANDS
+
+check if ef tolls were installed locally or globally
+
+> dotnet tool list --local (--global)
+
+upgrade tools to the latest version
+
+> dotnet tool update --global dotnet-ef
+
+----
+
+creates database context file along with table models from existing database (Name is in appsettings.json)
+
+> dotnet ef dbcontext scaffold "Name=ConnectionStrings:SQLExpressConnection_Blueprint" Microsoft.EntityFrameworkCore.SqlServer --use-database-names -o Models
+ 
+creates Migration folder with files out of Models classes and database context one
+
+> dotnet ef migrations add InitialCreate
+ 
+applies migration files
+
+> dotnet ef database update

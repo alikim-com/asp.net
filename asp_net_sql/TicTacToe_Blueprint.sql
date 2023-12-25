@@ -1,6 +1,8 @@
 CREATE DATABASE TicTacToe_Blueprint;
+go
 
 USE TicTacToe_Blueprint;
+go
 
 ---- common strings ----
 
@@ -9,6 +11,7 @@ CREATE TABLE ResxStrings(
 	[Name] NVARCHAR(64),
 	[Value] NVARCHAR(2048)
 );
+go
 ALTER TABLE ResxStrings ADD
 CONSTRAINT PK_RxS_ID PRIMARY KEY (ID);
 
@@ -18,6 +21,7 @@ CREATE TABLE MenuStrings(
 	IDX INT NOT NULL,
 	[Value] NVARCHAR(2048)
 );
+go
 ALTER TABLE MenuStrings ADD
 CONSTRAINT PK_MnS_ID PRIMARY KEY (ID),
 CONSTRAINT FK_MnS_ID__MnS_ParentID FOREIGN KEY (ParentID) REFERENCES MenuStrings(ID);
@@ -25,34 +29,38 @@ CONSTRAINT FK_MnS_ID__MnS_ParentID FOREIGN KEY (ParentID) REFERENCES MenuStrings
 ---- enums ----
 
 CREATE TABLE EnumBtnMsg(
-	ID INT,
+	ID INT NOT NULL,
 	[Value] NVARCHAR(64) NOT NULL,
 );
+go
 ALTER TABLE EnumBtnMsg ADD
 CONSTRAINT PK_EBM_ID PRIMARY KEY (ID);
 
 CREATE TABLE EnumGameRoster(
-	ID INT,
+	ID INT NOT NULL,
 	Origin VARCHAR(64) NOT NULL,
 	IDX INT NOT NULL,
 	[Identity] NVARCHAR(64) NOT NULL,
 );
+go
 ALTER TABLE EnumGameRoster ADD
 CONSTRAINT PK_EGR_ID PRIMARY KEY (ID),
 CONSTRAINT UQ_EGR_Ent UNIQUE (Origin, IDX),
 CHECK (Origin IN ('None', 'Human', 'AI'));
 
 CREATE TABLE EnumGameStates(
-	ID INT,
+	ID INT NOT NULL,
     [Value] NVARCHAR(64) NOT NULL,
 );
+go
 ALTER TABLE EnumGameStates ADD
 CONSTRAINT PK_EGS_ID PRIMARY KEY (ID);
 
 CREATE TABLE EnumUISides(
-	ID INT,
+	ID INT NOT NULL,
     [Value] NVARCHAR(64) NOT NULL,
 );
+go
 ALTER TABLE EnumUISides ADD
 CONSTRAINT PK_EUS_ID PRIMARY KEY (ID),
 CHECK ([Value] IN ('None', 'Left', 'Right'));
@@ -60,27 +68,25 @@ CHECK ([Value] IN ('None', 'Left', 'Right'));
 ---- persistent game state ----
 
 CREATE TABLE Games(
-	ID VARCHAR(1024), -- SHA-512 cookie
+	ID VARCHAR(64) NOT NULL, -- SHA-512 cookie
 	[Name] NVARCHAR(64) NOT NULL,
 	[State] INT,
 	TurnWheelHead INT NOT NULL,
 );
+go
 ALTER TABLE Games ADD
 CONSTRAINT PK_Gms_ID PRIMARY KEY (ID),
 CONSTRAINT FK_Gms_ID__EGS_Val FOREIGN KEY ([State]) REFERENCES EnumGameStates(ID);
 
 CREATE TABLE Chosen(
-	RosterID INT,
-	[Identity] NVARCHAR(64) NOT NULL,
+	RosterID INT NOT NULL,
 	UISide INT,
-	Origin VARCHAR(64) NOT NULL,
 );
+go
 ALTER TABLE Chosen ADD
 CONSTRAINT PK_Chn_RID PRIMARY KEY (RosterID),
 CONSTRAINT FK_EGR_ID__Chn_RID FOREIGN KEY (RosterID) REFERENCES EnumGameRoster(ID),
-CONSTRAINT FK_EGR_Idn__Chn_Idn FOREIGN KEY ([Identity]) REFERENCES EnumGameRoster([Identity]),
-CONSTRAINT FK_EUS_Val__Chn_USd FOREIGN KEY (UISide) REFERENCES EnumUISides(ID),
-CONSTRAINT FK_EGR_Orn__Chn_Orn FOREIGN KEY (Origin) REFERENCES EnumGameRoster(Origin);
+CONSTRAINT FK_EUS_Val__Chn_USd FOREIGN KEY (UISide) REFERENCES EnumUISides(ID);
 
 CREATE TABLE GameBoard (
 	[Row] INT IDENTITY(1,1),
@@ -88,6 +94,7 @@ CREATE TABLE GameBoard (
     Col2 INT,
     Col3 INT,
 );
+go
 ALTER TABLE GameBoard ADD
 CONSTRAINT PK_GBr_ID PRIMARY KEY ([Row]),
 CONSTRAINT FK_GBr_Col1__EGR_ID FOREIGN KEY (Col1) REFERENCES EnumGameRoster(ID),
@@ -96,13 +103,13 @@ CONSTRAINT FK_GBr_Col3__EGR_ID FOREIGN KEY (Col3) REFERENCES EnumGameRoster(ID);
 
 ---- DATA ----
 
-INSERT INTO EnumBtnMsg ([Value]) VALUES
-(N'Ready_AI'),
-(N'Ready_Human'),
-(N'Ready_Mix'),
-(N'Both_Missing'),
-(N'Left_Missing'),
-(N'Right_Missing');
+INSERT INTO EnumBtnMsg (ID, [Value]) VALUES
+(0, N'Ready_AI'),
+(1, N'Ready_Human'),
+(2, N'Ready_Mix'),
+(3, N'Both_Missing'),
+(4, N'Left_Missing'),
+(5, N'Right_Missing');
 
 INSERT INTO ResxStrings ([Name], [Value]) VALUES
 (N'Ready_AI', N'I like to watch...o_o'),
@@ -112,11 +119,11 @@ INSERT INTO ResxStrings ([Name], [Value]) VALUES
 (N'Left_Missing', N'Choose left player'),
 (N'Right_Missing', N'Choose right player');
 
-INSERT INTO EnumGameStates ([Value]) VALUES
-(N'Countdown'),
-(N'Started'),
-(N'Won'),
-(N'Tie');
+INSERT INTO EnumGameStates (ID, [Value]) VALUES
+(0, N'Countdown'),
+(1, N'Started'),
+(2, N'Won'),
+(3, N'Tie');
 
 INSERT INTO EnumGameRoster (ID, Origin, IDX, [Identity]) VALUES
 (0, 'None', 1, N'None'),

@@ -1,5 +1,5 @@
-﻿using System.Diagnostics;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace asp_net_sql.GameEngine;
 
@@ -49,7 +49,7 @@ internal class Producer
     {
         Engine.Log("Producer start");
 
-        for(int i = 0; i < 3; i++)
+        for (int i = 0; i < 3; i++)
         {
             Engine.Log($"Producer iteration: {i}");
             dataQueue.Add(i);
@@ -71,7 +71,7 @@ internal class MessageLoop
     internal MessageLoop(BlockingCollection<int> _dataQueue)
     {
         dataQueue = _dataQueue;
-    }   
+    }
 
     internal void Run()
     {
