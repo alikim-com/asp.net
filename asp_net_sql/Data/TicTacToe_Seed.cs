@@ -12,7 +12,7 @@ public partial class InitialCreate
         migrationBuilder.InsertData(
         table: "EnumBtnMsg",
         columns: new[] { "ID", "Value" },
-        values: new object[,] { 
+        values: new object[,] {
             { 0, "Ready_AI" },
             { 1, "Ready_Human" },
             { 2, "Ready_Mix" },

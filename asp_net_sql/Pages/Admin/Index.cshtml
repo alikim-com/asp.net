@@ -1,0 +1,54 @@
+﻿@page
+@model Admin_IndexModel
+
+@{
+    ViewData["Title"] = "EnumGameRoster List";
+}
+
+<h1>EnumGameRoster List</h1>
+
+<form method="post">
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Origin</th>
+            <th>IDX</th>
+            <th colspan="3">Identity</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.EnumGameRosterItems)
+        {
+            <tr>
+                <td>@item.ID</td>
+                <td>@item.Origin</td>
+                <td>@item.IDX</td>
+                <td>@item.Identity</td>
+                <td>
+                    @if (item == Model.EnumGameRosterItems.First())
+                    {
+                        <button id="aspRouteIdentVal_button"
+                            type="submit" 
+                            asp-page-handler="ChangeOrigin" 
+                            asp-route-pkey="@item.ID"
+                            asp-route-identVal="aspRouteIdentVal">
+                            Change Identity (Post)
+                        </button>
+                        <input id="aspRouteIdentVal_input" type="text" value="New Identity Value" />
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+</form>
+
+<script type="module">
+    const btn = document.getElementById('aspRouteIdentVal_button');
+    const inp = document.getElementById('aspRouteIdentVal_input');
+    inp.addEventListener('blur', () => {
+        const fa = btn.getAttribute('formaction');
+        btn.setAttribute('formaction', fa.replace('aspRouteIdentVal', encodeURI(inp.value)));
+    });
+</script>
