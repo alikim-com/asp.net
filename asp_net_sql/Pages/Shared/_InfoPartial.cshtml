@@ -1,0 +1,20 @@
+﻿@{
+    var cnt = ViewData.ModelState.Count(ms => ms.Value?.Errors.Count > 0);
+    if (cnt == 0) return;
+}
+<div id="infoPartial">
+@foreach (var key in ViewData.ModelState.Keys)
+{
+    var val = ViewData.ModelState[key];
+    if (val == null || val.Errors.Count == 0) continue;
+    <p>ModelState[@key]</p>
+    <ul>
+        <li>AttemptedValue: '@val.AttemptedValue'</li>
+        <li>RawValue: '@val.RawValue'</li>
+    @foreach (var error in val.Errors)
+    {
+        <li>error: '@error.ErrorMessage'</li>
+    }
+    </ul>
+}
+</div>

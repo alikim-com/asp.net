@@ -37,6 +37,9 @@
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
+        
+        @await Html.PartialAsync("_InfoPartial")
+        
     </div>
 
     <footer class="border-top footer text-muted">

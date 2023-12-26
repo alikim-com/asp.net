@@ -22,7 +22,20 @@ public class Admin_IndexModel(TicTacToe_Context dbContext) : PageModel
         if (item != null)
         {
             item.Identity = identVal;
-            await _dbContext.SaveChangesAsync();
+            try
+            {
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                ModelState.AddModelError("Admin_IndexModel.OnPostChangeOriginAsync.DbUpdateException", ex.Message);
+                return Page();
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("Admin_IndexModel.OnPostChangeOriginAsync.Exception", ex.Message);
+                return Page();
+            }
         }
 
         return RedirectToPage();
