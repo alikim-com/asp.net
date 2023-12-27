@@ -29,6 +29,15 @@ public class Admin_IndexModel(TicTacToe_Context dbContext) : PageModel
     {
         EnumGameRosterItems = await _dbContext.EnumGameRosters.ToListAsync();
     }
+
+    public async Task<PageResult> PageWithResult(Result result, ResType type)
+    {
+        result.type = type;
+        ViewData["Result"] = result;
+        await OnGetAsync();
+        return Page();
+    }
+
     public async Task<IActionResult> OnPostChangeOriginAsync(int pkey, string identVal)
     {
         var result = new Result();
@@ -47,28 +56,28 @@ public class Admin_IndexModel(TicTacToe_Context dbContext) : PageModel
                         result.info.Add(key, errors);
                     }
                 }
-                result.type = ResType.Error;
-                ViewData["Result"] = result;
-                return Page();
+                return await PageWithResult(result, ResType.Error);
             }
 
             item.Identity = identVal;
+
+            ResType resType;
+
             try
             {
                 int cnt = await _dbContext.SaveChangesAsync();
-                result.type = ResType.OK;
+                resType = ResType.OK;
                 result.info.Add(
                     "Admin_IndexModel.SaveChangesAsync", 
                     [$"Success, {cnt} row affected"]);
             }
             catch (Exception ex)
             {
-                result.type = ResType.Error;
+                resType = ResType.Error;
                 result.info.Add("Admin_IndexModel.SaveChangesAsync.Exception", [ex.Message]);
             }
 
-            ViewData["Result"] = result;
-            return Page();
+            return await PageWithResult(result, resType);
 
         }
 

@@ -35,7 +35,7 @@
                             asp-route-identVal="aspRouteIdentVal">
                             Change Identity (Post)
                         </button>
-                        <input id="aspRouteIdentVal_input" type="text" value="New Identity Value" />
+                        <input id="aspRouteIdentVal_input" type="text" value="@item.Identity" />
                     }
                 </td>
             </tr>
@@ -45,11 +45,13 @@
 </form>
 
 <script type="module">
-    const btn = document.getElementById('aspRouteIdentVal_button');
-    const inp = document.getElementById('aspRouteIdentVal_input');
-    inp.addEventListener('blur', () => {
-        const fa = btn.getAttribute('formaction');
-        btn.setAttribute('formaction', fa.replace('aspRouteIdentVal', encodeURI(inp.value)));
+    window.addEventListener('load', () => {
+        const btn = document.getElementById('aspRouteIdentVal_button');
+        const inp = document.getElementById('aspRouteIdentVal_input');
+        const onBlur = () => {
+            const fa = btn.getAttribute('formaction');
+            btn.setAttribute('formaction', fa.replace('aspRouteIdentVal', encodeURI(inp.value)));
+        };
+        inp.addEventListener('blur', onBlur);
     });
-    inp.blur();
 </script>
