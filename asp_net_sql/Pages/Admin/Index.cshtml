@@ -1,5 +1,7 @@
 ﻿@page
-@model Admin_IndexModel
+@using asp_net_sql.Models
+@using asp_net_sql.Pages
+@model Admin_IndexModel<EnumGameRoster>
 
 @{
     ViewData["Title"] = "EnumGameRoster List";
@@ -10,6 +12,21 @@
 <form method="post">
 <table class="table">
     <thead>
+    @{
+        var colArr = ViewData["Columns"];
+        if(colArr != null) {
+            var cols = colArr as string[];
+            if(cols?.Length > 0)
+            {
+                <tr>
+                    @foreach (var col in cols) 
+                    {
+                        <th>@col</th>
+                    }
+                </tr>
+            }
+    }
+}
         <tr>
             <th>ID</th>
             <th>Origin</th>
@@ -18,7 +35,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model.EnumGameRosterItems)
+            @foreach (var item in Model.DbSetItems)
         {
             <tr>
                 <td>@item.ID</td>
@@ -26,7 +43,7 @@
                 <td>@item.IDX</td>
                 <td>@item.Identity</td>
                 <td>
-                    @if (item == Model.EnumGameRosterItems.First())
+                        @if (item == Model.DbSetItems.First())
                     {
                         <button id="aspRouteIdentVal_button"
                             type="submit" 

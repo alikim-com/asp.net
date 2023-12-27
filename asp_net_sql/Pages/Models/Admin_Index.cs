@@ -3,9 +3,29 @@ using asp_net_sql.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using System.Collections;
+using System.Collections.Generic;
 using static asp_net_sql.Pages.Result;
 
 namespace asp_net_sql.Pages;
+
+public static class EntityHelper
+{
+    public static string[] GetColumnNames<T>() where T : class
+    {
+        var propertyNames = typeof(T).GetProperties()
+            .Where(property => IsSimpleType(property.PropertyType))
+            .Select(property => property.Name)
+            .ToArray();
+
+        return propertyNames;
+    }
+
+    private static bool IsSimpleType(Type type)
+    {
+        return type.IsPrimitive || type.IsValueType || type == typeof(string);
+    }
+}
 
 public class Result
 {
@@ -19,15 +39,31 @@ public class Result
     public Dictionary<string, string[]> info = [];
 }
 
-public class Admin_IndexModel(TicTacToe_Context dbContext) : PageModel
+public class Admin_IndexModel<T> : PageModel where T : class
 {
-    private readonly TicTacToe_Context _dbContext = dbContext;
+    private readonly TicTacToe_Context _dbContext;
 
-    public List<EnumGameRoster> EnumGameRosterItems { get; set; } = [];
+    readonly DbSet<T> DbSet;
+    public List<T> DbSetItems = [];
+
+    public Admin_IndexModel(TicTacToe_Context dbContext)
+    {
+        _dbContext = dbContext;
+
+        var dict = _dbContext.GetDbSetDictionary();
+
+        if (!dict.TryGetValue(typeof(T), out var obj)) 
+            throw new Exception($"Admin_IndexModel.GetDbSetDictionary : type '{typeof(T)}' not found");
+       
+        DbSet = (DbSet<T>)obj!;
+
+       var strArr = EntityHelper.GetColumnNames<T>();
+       // ViewData["Columns"] = strArr;
+    }
 
     public async Task OnGetAsync()
     {
-        EnumGameRosterItems = await _dbContext.EnumGameRosters.ToListAsync();
+        DbSetItems = await DbSet.ToListAsync();
     }
 
     public async Task<PageResult> PageWithResult(Result result, ResType type)
