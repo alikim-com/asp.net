@@ -32,23 +32,6 @@ public partial class TicTacToe_Context : DbContext
 
     public virtual DbSet<ResxString> ResxStrings { get; set; }
 
-    /// <summary>
-    /// Provides matching DbSet<T> for generic admin page model classes and Admin menu
-    /// </summary>
-    public Dictionary<Type, object?> GetDbSetDictionary()
-    {
-        var dbSetProperties = GetType().GetProperties()
-            .Where(p => p.PropertyType.IsGenericType &&
-                        p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>));
-
-        var dictionary = dbSetProperties.ToDictionary(
-            p => p.PropertyType.GetGenericArguments()[0],
-            p => p.GetValue(this)
-        );
-
-        return dictionary;
-    }
-
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("Name=ConnectionStrings:SQLExpressConnection");
 

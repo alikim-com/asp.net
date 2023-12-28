@@ -1,33 +1,45 @@
 ﻿using asp_net_sql.Data;
-using asp_net_sql.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using System.Collections;
-using System.Collections.Generic;
 using static asp_net_sql.Pages.Result;
+
+using System.Reflection;
+using asp_net_sql.Models;
 
 namespace asp_net_sql.Pages;
 
 public static class EntityHelper
 {
-    public static string[] GetColumnNames<T>() where T : class
+    public static Dictionary<Type, object?> GetDbSetsInfo(TicTacToe_Context dbContext)
     {
-        var propertyNames = typeof(T).GetProperties()
-            .Where(property => IsSimpleType(property.PropertyType))
-            .Select(property => property.Name)
-            .ToArray();
+        var dbSetProperties = dbContext.GetType().GetProperties()
+            .Where(p => p.PropertyType.IsGenericType &&
+                        p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>));
 
-        return propertyNames;
+        var infoDict = dbSetProperties.ToDictionary(
+            p => p.PropertyType.GetGenericArguments()[0],
+            p => p.GetValue(dbContext)
+        );
+
+        return infoDict;
     }
 
-    private static bool IsSimpleType(Type type)
+    public static List<PropertyInfo> GetClassPropInfo<T>() where T : class
     {
-        return type.IsPrimitive || type.IsValueType || type == typeof(string);
+        var infoDict = typeof(T).GetProperties()
+            .Where(property => IsSimpleType(property.PropertyType)).ToList();
+
+        return infoDict;
     }
+
+    private static bool IsSimpleType(Type type) =>
+        type.IsPrimitive || type.IsValueType || type == typeof(string);
 }
 
-public class Result
+public class Result(
+    ResType _type = ResType.None,
+    Dictionary<string, string[]>? _info = null)
 {
     public enum ResType
     {
@@ -35,35 +47,50 @@ public class Result
         OK,
         Error
     }
-    public ResType type = ResType.None;
-    public Dictionary<string, string[]> info = [];
+    public ResType type = _type;
+    public Dictionary<string, string[]> info = _info ?? [];
 }
 
 public class Admin_IndexModel<T> : PageModel where T : class
 {
-    private readonly TicTacToe_Context _dbContext;
+    private readonly TicTacToe_Context dbContext;
+
+    readonly List<string> DbSetNames;
 
     readonly DbSet<T> DbSet;
-    public List<T> DbSetItems = [];
 
-    public Admin_IndexModel(TicTacToe_Context dbContext)
+    readonly List<PropertyInfo> DbSetPropInfo;
+    public List<T> AsyncDbSetItems = [];
+
+    public Admin_IndexModel(TicTacToe_Context _dbContext)
     {
-        _dbContext = dbContext;
+        dbContext = _dbContext;
 
-        var dict = _dbContext.GetDbSetDictionary();
+        var dict = EntityHelper.GetDbSetsInfo(dbContext);
 
-        if (!dict.TryGetValue(typeof(T), out var obj)) 
+        DbSetNames = dict.Keys.Select(k => k.Name).ToList();
+
+        if (!dict.TryGetValue(typeof(T), out var obj))
             throw new Exception($"Admin_IndexModel.GetDbSetDictionary : type '{typeof(T)}' not found");
-       
+
         DbSet = (DbSet<T>)obj!;
 
-       var strArr = EntityHelper.GetColumnNames<T>();
-       // ViewData["Columns"] = strArr;
+        DbSetPropInfo = EntityHelper.GetClassPropInfo<T>();
+
+        var entityType = dbContext.Model.FindEntityType(typeof(T));
+        var primaryKey = entityType?.FindPrimaryKey()?.Properties.Select(p => p.Name);
+        // entityType?.FindPrimaryKey()?.Properties[0].Name
+        if (primaryKey != null)
+        {
+        }
     }
 
     public async Task OnGetAsync()
     {
-        DbSetItems = await DbSet.ToListAsync();
+        ViewData["DbSetNames"] ??= DbSetNames;
+        ViewData["DbSetPropInfo"] ??= DbSetPropInfo;
+
+        AsyncDbSetItems = await DbSet.ToListAsync();
     }
 
     public async Task<PageResult> PageWithResult(Result result, ResType type)
@@ -74,19 +101,23 @@ public class Admin_IndexModel<T> : PageModel where T : class
         return Page();
     }
 
-    public async Task<IActionResult> OnPostChangeOriginAsync(int pkey, string identVal)
+    public async Task<IActionResult> OnPostChangeOriginAsync()
     {
+        var qry = HttpContext.Request.Query;
+        
+
         var result = new Result();
 
-        var item = await _dbContext.EnumGameRosters.FindAsync(pkey);
+        var item = await DbSet.FindAsync(1);
         if (item != null)
         {
-            if (!ModelState.IsValid) {
+            if (!ModelState.IsValid)
+            {
 
-                foreach(var key in ModelState.Keys)
+                foreach (var key in ModelState.Keys)
                 {
                     var value = ModelState[key];
-                    if(value != null && value.ValidationState == Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Invalid)
+                    if (value != null && value.ValidationState == Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Invalid)
                     {
                         var errors = value.Errors.Select(ent => ent.ErrorMessage).ToArray();
                         result.info.Add(key, errors);
@@ -95,16 +126,16 @@ public class Admin_IndexModel<T> : PageModel where T : class
                 return await PageWithResult(result, ResType.Error);
             }
 
-            item.Identity = identVal;
+           // item.Identity = identVal;
 
             ResType resType;
 
             try
             {
-                int cnt = await _dbContext.SaveChangesAsync();
+                int cnt = await dbContext.SaveChangesAsync();
                 resType = ResType.OK;
                 result.info.Add(
-                    "Admin_IndexModel.SaveChangesAsync", 
+                    "Admin_IndexModel.SaveChangesAsync",
                     [$"Success, {cnt} row affected"]);
             }
             catch (Exception ex)

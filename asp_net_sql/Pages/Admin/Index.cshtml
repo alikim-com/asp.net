@@ -1,74 +1,100 @@
 ﻿@page
+
+@using System.Reflection;
+
 @using asp_net_sql.Models
 @using asp_net_sql.Pages
 @model Admin_IndexModel<EnumGameRoster>
 
 @{
     ViewData["Title"] = "EnumGameRoster List";
+    var DbSetNames = ViewData["DbSetNames"] as List<string>;
+    var DbSetPropInfo = ViewData["DbSetPropInfo"] as List<PropertyInfo>;
+    if (DbSetNames == null || DbSetPropInfo == null)
+    {
+        ViewData["Result"] = new Result(
+            Result.ResType.Error,
+            new Dictionary<string, string[]> {
+                {
+                    "Razor.Admin_IndexModel",
+                    new string[] { "ViewData missing or cast error" }
+                }
+            }
+        );
+        return;
+    }
+    var row = -1;
+    var allProps = string.Join(",", DbSetPropInfo.Select(pInf => pInf.Name));
 }
 
 <h1>EnumGameRoster List</h1>
 
-<form method="post">
-<table class="table">
-    <thead>
-    @{
-        var colArr = ViewData["Columns"];
-        if(colArr != null) {
-            var cols = colArr as string[];
-            if(cols?.Length > 0)
-            {
-                <tr>
-                    @foreach (var col in cols) 
-                    {
-                        <th>@col</th>
-                    }
-                </tr>
-            }
+<menu id="adminMenu">
+    @foreach (var menuItem in DbSetNames)
+    {
+        <div>@menuItem</div>
     }
-}
-        <tr>
-            <th>ID</th>
-            <th>Origin</th>
-            <th>IDX</th>
-            <th colspan="3">Identity</th>
-        </tr>
-    </thead>
-    <tbody>
-            @foreach (var item in Model.DbSetItems)
-        {
+</menu>
+
+<form method="post">
+    <table class="table">
+        <thead>
             <tr>
-                <td>@item.ID</td>
-                <td>@item.Origin</td>
-                <td>@item.IDX</td>
-                <td>@item.Identity</td>
-                <td>
-                        @if (item == Model.DbSetItems.First())
-                    {
-                        <button id="aspRouteIdentVal_button"
-                            type="submit" 
-                            asp-page-handler="ChangeOrigin" 
-                            asp-route-pkey="@item.ID"
-                            asp-route-identVal="aspRouteIdentVal">
-                            Change Identity (Post)
-                        </button>
-                        <input id="aspRouteIdentVal_input" type="text" value="@item.Identity" />
-                    }
-                </td>
+                @foreach (var pInf in DbSetPropInfo)
+                {
+                    <th>@pInf.Name</th>
+                }
+                <th>&nbsp;</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @{
+                foreach (var item in Model.AsyncDbSetItems)
+                {
+                    row++;
+                    var btnId = $"btn_{row}";
+                    <tr>
+                        @foreach (var pInf in DbSetPropInfo)
+                        {
+                            var inpId = $"inp_{pInf.Name}_{row}";
+                            <td>
+                                <input id="@inpId" type="text" value="@pInf.GetValue(item)" />
+                            </td>
+                        }
+                        <td>
+                            <button id="@btnId"
+                                    type="submit"
+                                    asp-page-handler="ChangeOrigin">
+                                Change (Post)
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
 </form>
 
 <script type="module">
     window.addEventListener('load', () => {
-        const btn = document.getElementById('aspRouteIdentVal_button');
-        const inp = document.getElementById('aspRouteIdentVal_input');
-        const onBlur = () => {
-            const fa = btn.getAttribute('formaction');
-            btn.setAttribute('formaction', fa.replace('aspRouteIdentVal', encodeURI(inp.value)));
+
+        const propArr = "@allProps".split(',');
+
+        const onClick = (row, btn) => {
+            let fa = `&row=${row}`;
+            for (const pr of propArr) {
+                const inp = document.getElementById(`inp_${pr}_${row}`);
+                fa += `&${pr}=${encodeURI(inp.value)}`;
+            }
+            const attr = btn.getAttribute('formaction');
+            btn.setAttribute('formaction', attr + fa);
         };
-        inp.addEventListener('blur', onBlur);
+
+        for (let row = 0; row < @row; row++) {
+            const btn = document.getElementById(`btn_${row}`);
+            btn.addEventListener('click', () => {
+                onClick(row, btn);
+            });
+        }
     });
 </script>
