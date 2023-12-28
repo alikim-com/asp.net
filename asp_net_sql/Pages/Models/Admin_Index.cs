@@ -58,8 +58,10 @@ public class Admin_IndexModel<T> : PageModel where T : class
     readonly List<string> DbSetNames;
 
     readonly DbSet<T> DbSet;
-
+    readonly Type DbSetType = typeof(T);
     readonly List<PropertyInfo> DbSetPropInfo;
+    readonly Dictionary<string, Type> DbSetPKeys;
+
     public List<T> AsyncDbSetItems = [];
 
     public Admin_IndexModel(TicTacToe_Context _dbContext)
@@ -70,18 +72,27 @@ public class Admin_IndexModel<T> : PageModel where T : class
 
         DbSetNames = dict.Keys.Select(k => k.Name).ToList();
 
-        if (!dict.TryGetValue(typeof(T), out var obj))
-            throw new Exception($"Admin_IndexModel.GetDbSetDictionary : type '{typeof(T)}' not found");
+        if (!dict.TryGetValue(DbSetType, out var obj))
+            throw new Exception($"Admin_IndexModel.GetDbSetDictionary : type '{DbSetType}' not found");
 
         DbSet = (DbSet<T>)obj!;
 
         DbSetPropInfo = EntityHelper.GetClassPropInfo<T>();
 
-        var entityType = dbContext.Model.FindEntityType(typeof(T));
-        var primaryKey = entityType?.FindPrimaryKey()?.Properties.Select(p => p.Name);
-        // entityType?.FindPrimaryKey()?.Properties[0].Name
-        if (primaryKey != null)
+        var entityType = dbContext.Model.FindEntityType(DbSetType);
+        var _DbSetPKeys = entityType?.FindPrimaryKey()?.Properties.Select(p => 
+        new KeyValuePair<string, Type?>(
+            p.Name, 
+            p.PropertyInfo?.PropertyType
+        )).ToDictionary() ?? [];
+
+        DbSetPKeys = [];
+        foreach (var (name, type) in _DbSetPKeys)
         {
+            if(type == null)
+                throw new Exception($"Admin_IndexModel.ctor : _DbSetPKeys[{name}] is null");
+
+            DbSetPKeys.Add(name, type);
         }
     }
 
@@ -103,17 +114,18 @@ public class Admin_IndexModel<T> : PageModel where T : class
 
     public async Task<IActionResult> OnPostChangeOriginAsync()
     {
-        var qry = HttpContext.Request.Query;
-        
-
         var result = new Result();
 
-        var item = await DbSet.FindAsync(1);
+        var qry = HttpContext.Request.Query;
+
+        object[] PKeyValues = DbSetPKeys.Select(ent => 
+            Convert.ChangeType(qry[ent.Key].ToString(), ent.Value)).ToArray();
+
+        var item = await DbSet.FindAsync(PKeyValues);
         if (item != null)
         {
             if (!ModelState.IsValid)
             {
-
                 foreach (var key in ModelState.Keys)
                 {
                     var value = ModelState[key];
@@ -126,7 +138,9 @@ public class Admin_IndexModel<T> : PageModel where T : class
                 return await PageWithResult(result, ResType.Error);
             }
 
-           // item.Identity = identVal;
+            // PKeyValues -> all props
+            // then select by keys from DbSetPKeys -> PKeyValues
+            // item.Identity = identVal;
 
             ResType resType;
 
