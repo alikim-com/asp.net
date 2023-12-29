@@ -64,7 +64,7 @@
                         <td>
                             <button id="@btnId"
                                     type="submit"
-                                    asp-page-handler="ChangeOrigin">
+                                    asp-page-handler="Update">
                                 Change (Post)
                             </button>
                         </td>
@@ -92,7 +92,8 @@
 
         for (let row = 0; row < @row; row++) {
             const btn = document.getElementById(`btn_${row}`);
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', evt => {
+                // evt.preventDefault();
                 onClick(row, btn);
             });
         }

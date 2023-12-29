@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using static asp_net_sql.Pages.Result;
 
 using System.Reflection;
-using asp_net_sql.Models;
 
 namespace asp_net_sql.Pages;
 
@@ -60,7 +59,7 @@ public class Admin_IndexModel<T> : PageModel where T : class
     readonly DbSet<T> DbSet;
     readonly Type DbSetType = typeof(T);
     readonly List<PropertyInfo> DbSetPropInfo;
-    readonly Dictionary<string, Type> DbSetPKeys;
+    readonly List<string> DbSetPKeys;
 
     public List<T> AsyncDbSetItems = [];
 
@@ -73,27 +72,16 @@ public class Admin_IndexModel<T> : PageModel where T : class
         DbSetNames = dict.Keys.Select(k => k.Name).ToList();
 
         if (!dict.TryGetValue(DbSetType, out var obj))
-            throw new Exception($"Admin_IndexModel.GetDbSetDictionary : type '{DbSetType}' not found");
+            throw new Exception($"Admin_IndexModel.Ctor : type '{DbSetType}' not found");
 
         DbSet = (DbSet<T>)obj!;
 
         DbSetPropInfo = EntityHelper.GetClassPropInfo<T>();
 
         var entityType = dbContext.Model.FindEntityType(DbSetType);
-        var _DbSetPKeys = entityType?.FindPrimaryKey()?.Properties.Select(p => 
-        new KeyValuePair<string, Type?>(
-            p.Name, 
-            p.PropertyInfo?.PropertyType
-        )).ToDictionary() ?? [];
-
-        DbSetPKeys = [];
-        foreach (var (name, type) in _DbSetPKeys)
-        {
-            if(type == null)
-                throw new Exception($"Admin_IndexModel.ctor : _DbSetPKeys[{name}] is null");
-
-            DbSetPKeys.Add(name, type);
-        }
+        var pKey = (entityType?.FindPrimaryKey()) ?? 
+            throw new Exception($"Admin_IndexModel.Ctor : pkey not found for type '{DbSetType}'");
+        DbSetPKeys = pKey.Properties.Select(p => p.Name).ToList();
     }
 
     public async Task OnGetAsync()
@@ -112,54 +100,89 @@ public class Admin_IndexModel<T> : PageModel where T : class
         return Page();
     }
 
-    public async Task<IActionResult> OnPostChangeOriginAsync()
+    public async Task<IActionResult> OnPostUpdateAsync()
     {
         var result = new Result();
 
-        var qry = HttpContext.Request.Query;
-
-        object[] PKeyValues = DbSetPKeys.Select(ent => 
-            Convert.ChangeType(qry[ent.Key].ToString(), ent.Value)).ToArray();
-
-        var item = await DbSet.FindAsync(PKeyValues);
-        if (item != null)
+        using var transaction = await dbContext.Database
+            .BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead);
+        try
         {
-            if (!ModelState.IsValid)
+            AsyncDbSetItems = await DbSet.ToListAsync();
+            foreach(var pk in DbSetPKeys)
             {
-                foreach (var key in ModelState.Keys)
+               // DbSetPropInfo
+            }
+
+            
+           // var item = AsyncDbSetItems.Find()
+
+            var qry = HttpContext.Request.Query;
+
+            var typedProps = DbSetPropInfo.Select(ent =>
+                new KeyValuePair<string, object>(
+                    ent.Name,
+                    Convert.ChangeType(qry[ent.Name].ToString(), ent.PropertyType)
+                )).ToDictionary();
+
+            object[] PKeyValues = DbSetPKeys.Select(pk => typedProps[pk]).ToArray();
+
+            var item = await DbSet.FindAsync(PKeyValues);
+            if (item != null)
+            {
+                if (!ModelState.IsValid)
                 {
-                    var value = ModelState[key];
-                    if (value != null && value.ValidationState == Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Invalid)
+                    foreach (var key in ModelState.Keys)
                     {
-                        var errors = value.Errors.Select(ent => ent.ErrorMessage).ToArray();
-                        result.info.Add(key, errors);
+                        var value = ModelState[key];
+                        if (value != null && value.ValidationState == Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Invalid)
+                        {
+                            var errors = value.Errors.Select(ent => ent.ErrorMessage).ToArray();
+                            result.info.Add(key, errors);
+                        }
                     }
+                    return await PageWithResult(result, ResType.Error);
                 }
-                return await PageWithResult(result, ResType.Error);
+
+                // update table
+                foreach (var pInf in DbSetPropInfo)
+                    pInf.SetValue(item, typedProps[pInf.Name]);
+
+                ResType resType;
+
+                try
+                {
+                    int cnt = await dbContext.SaveChangesAsync();
+
+                    await transaction.CommitAsync();
+
+                    resType = ResType.OK;
+                    result.info.Add(
+                        "Admin_IndexModel.SaveChangesAsync",
+                        [$"Success, {cnt} row affected"]);
+                }
+                catch (Exception ex)
+                {
+                    resType = ResType.Error;
+                    result.info.Add(
+                        "Admin_IndexModel.SaveChangesAsync", 
+                        ["Exception: " + ex.Message]);
+                }
+
+                return await PageWithResult(result, resType);
+
             }
 
-            // PKeyValues -> all props
-            // then select by keys from DbSetPKeys -> PKeyValues
-            // item.Identity = identVal;
 
-            ResType resType;
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
 
-            try
-            {
-                int cnt = await dbContext.SaveChangesAsync();
-                resType = ResType.OK;
-                result.info.Add(
-                    "Admin_IndexModel.SaveChangesAsync",
-                    [$"Success, {cnt} row affected"]);
-            }
-            catch (Exception ex)
-            {
-                resType = ResType.Error;
-                result.info.Add("Admin_IndexModel.SaveChangesAsync.Exception", [ex.Message]);
-            }
-
-            return await PageWithResult(result, resType);
-
+            result.info.Add(
+                "Admin_IndexModel.OnPostUpdateAsync", 
+                ["Transaction exception: " + ex.Message]);
+            return await PageWithResult(result, ResType.Error);
         }
 
         return RedirectToPage();
