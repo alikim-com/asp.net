@@ -20,6 +20,11 @@ ALTER DATABASE TicTacToe
 SET SINGLE_USER
 WITH ROLLBACK IMMEDIATE;
 
+ALTER DATABASE TicTacToe
+SET MULTI_USER;
+
+
+EXEC sp_rename 'MenuStrings', 'MenuStrings2';
 
 SELECT
     session_id,

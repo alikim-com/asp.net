@@ -1,4 +1,4 @@
-﻿@page
+﻿@page "{DbSetName?}"
 
 @using System.Reflection;
 
@@ -6,22 +6,8 @@
 @using asp_net_sql.Pages
 @model Admin_IndexModel<EnumGameState>
 
-
 @{
-
-    /*
-     * @{
-    Type modelType = typeof(YourDynamicType);
-    var pageModelType = typeof(Admin_IndexModel<>).MakeGenericType(modelType);
-        }
-
-        @model pageModelType
-     *
-     */
-
-    var pageResult = ViewData["page"] 
-    as Microsoft.AspNetCore.Mvc.RazorPages.PageResult;
-
+    // @RouteData.Values["DbSetName"]
     ViewData["Title"] = "EnumGameRoster List";
     var DbSetNames = ViewData["DbSetNames"] as List<string>;
     var DbSetPropInfo = ViewData["DbSetPropInfo"] as List<PropertyInfo>;
@@ -47,7 +33,7 @@
 <menu id="adminMenu">
     @foreach (var menuItem in DbSetNames)
     {
-        <div>@menuItem</div>
+        <div class="menu">@menuItem</div>
     }
 </menu>
 
@@ -64,27 +50,27 @@
         </thead>
         <tbody>
             @{
-                foreach (var item in Model.AsyncDbSetItems)
-                {
-                    row++;
-                    var btnId = $"btn_{row}";
-                        <tr>
-                            @foreach (var pInf in DbSetPropInfo)
-                        {
-                            var inpId = $"inp_{pInf.Name}_{row}";
-                            <td>
-                                <input id="@inpId" type="text" value="@pInf.GetValue(item)" />
-                            </td>
-                        }
-                            <td>
-                                <button id="@btnId"
-                                        type="submit"
-                                        asp-page-handler="Update">
-                                    Change (Post)
-                                </button>
-                            </td>
-                        </tr>
-                }
+                // foreach (var item in Model.AsyncDbSetItems)
+                // {
+                //     row++;
+                //     var btnId = $"btn_{row}";
+                //         <tr>
+                //             @foreach (var pInf in DbSetPropInfo)
+                //         {
+                //             var inpId = $"inp_{pInf.Name}_{row}";
+                //             <td>
+                //                 <input id="@inpId" type="text" value="@pInf.GetValue(item)" />
+                //             </td>
+                //         }
+                //             <td>
+                //                 <button id="@btnId"
+                //                         type="submit"
+                //                         asp-page-handler="Update">
+                //                     Change (Post)
+                //                 </button>
+                //             </td>
+                //         </tr>
+                // }
             }
         </tbody>
     </table>

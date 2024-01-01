@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using static asp_net_sql.Pages.Result;
 
 using System.Reflection;
+using System.Diagnostics;
 
 namespace asp_net_sql.Pages;
 
@@ -16,7 +17,7 @@ public static class EntityHelper
             p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>))
             .Select(p => p.PropertyType.GetGenericArguments()[0].Name).ToList();
 
-    public static List<T> GetDbSet<T>(TicTacToe_Context dbContext) where T : class
+    public static DbSet<T> GetDbSet<T>(TicTacToe_Context dbContext) where T : class
     {
         var typePInf = dbContext.GetType().GetProperties()
         .FirstOrDefault(p => p.PropertyType == typeof(DbSet<T>));
@@ -26,26 +27,8 @@ public static class EntityHelper
         if (dbSetGen is not DbSet<T> dbSet)
             throw new Exception($"EntityHelper.GetDbSet : error getting DbSet<{nameof(T)}> from dbContext");
 
-        return [.. dbSet];
+        return dbSet;
     }
-
-    /*
-       public static Dictionary<Type, object?> GetDbSetsNames(TicTacToe_Context dbContext)
-    {
-        var dbSetProperties = dbContext.GetType().GetProperties()
-            .Where(p => p.PropertyType.IsGenericType &&
-                        p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>));
-
-        var infoDict = dbSetProperties.ToDictionary(
-            p => p.PropertyType.GetGenericArguments()[0],
-            p => p.GetValue(dbContext)
-        );
-
-        return infoDict;
-    }
-     
-     */
-
 
     public static List<PropertyInfo> GetClassPropInfo<T>() where T : class
     {
@@ -76,18 +59,14 @@ public class Result(
 public class Admin_IndexModel<T> : PageModel where T : class
 {
     readonly TicTacToe_Context dbContext;
-    readonly Type DbSetType = typeof(T);
 
     readonly List<string> DbSetNames;
 
-    readonly List<T> DbSet;
-    
+    readonly DbSet<T> DbSet;
     readonly List<PropertyInfo> DbSetPropInfo;
     readonly List<string> DbSetPKeys;
 
-    public List<T> AsyncDbSetItems = [];
-
-    PageResult? pageResult;
+    public List<T> AsyncDbSetItems;
 
     public Admin_IndexModel(TicTacToe_Context _dbContext)
     {
@@ -99,13 +78,17 @@ public class Admin_IndexModel<T> : PageModel where T : class
 
         DbSetPropInfo = EntityHelper.GetClassPropInfo<T>();
 
+        var DbSetType = typeof(T);
         var entityType = dbContext.Model.FindEntityType(DbSetType);
         var pKey = (entityType?.FindPrimaryKey()) ?? 
             throw new Exception($"Admin_IndexModel.Ctor : pkey not found for type '{DbSetType}'");
+
         DbSetPKeys = pKey.Properties.Select(p => p.Name).ToList();
+
+        AsyncDbSetItems = [];
     }
 
-    public Dictionary<string, object> TypedPropsFromQuery(IQueryCollection? qry, string suf) =>
+    Dictionary<string, object> TypedPropsFromQuery(IQueryCollection? qry, string suf) =>
         qry == null ? [] :
         DbSetPropInfo.Select(ent =>
             new KeyValuePair<string, object>(
@@ -113,30 +96,42 @@ public class Admin_IndexModel<T> : PageModel where T : class
                 Convert.ChangeType(qry[ent.Name + suf].ToString(), ent.PropertyType)
             )).ToDictionary();
 
-    public async Task OnGetAsync()
+    void SetViewData()
     {
         ViewData["DbSetNames"] ??= DbSetNames;
         ViewData["DbSetPropInfo"] ??= DbSetPropInfo;
+    }
 
+    /// <summary>
+    /// Runs after Ctor
+    /// </summary>
+    public async Task OnGetAsync()
+    {
+        SetViewData();
         AsyncDbSetItems = await DbSet.ToListAsync();
     }
 
-    public async Task<PageResult> PageWithResult(Result result, ResType type)
+    /// <summary>
+    /// Runs after OnPost, followed by RazorPage
+    /// </summary>
+    PageResult PageWithResult(Result result, ResType type)
     {
         result.type = type;
         ViewData["Result"] = result;
-        await OnGetAsync();
-        pageResult = Page();
-        ViewData["page"] = pageResult;
+        SetViewData();
 
-        //var method = pageResult.Page.PageContext.HttpContext.Request.Method;
-
-        //var pCont = new PageContext();
-        //pCont.HttpContext.Request.Method = m;
-
-        return pageResult;
+        return Page();
     }
 
+    void UpdateDbSet(T item, Dictionary<string, object> props)
+    {
+        foreach (var pInf in DbSetPropInfo)
+            pInf.SetValue(item, props[pInf.Name]);
+    }
+
+    /// <summary>
+    /// Runs after Ctor
+    /// </summary>
     public async Task<IActionResult> OnPostUpdateAsync()
     {
         var result = new Result();
@@ -168,12 +163,10 @@ public class Admin_IndexModel<T> : PageModel where T : class
                             result.info.Add("<Invalid model> " + key, errors);
                         }
                     }
-                    return await PageWithResult(result, ResType.Error);
+                    return PageWithResult(result, ResType.Error);
                 }
 
-                // update table
-                foreach (var pInf in DbSetPropInfo)
-                    pInf.SetValue(item, newProps[pInf.Name]);
+                UpdateDbSet(item, newProps);
 
                 ResType resType;
 
@@ -190,13 +183,15 @@ public class Admin_IndexModel<T> : PageModel where T : class
                 }
                 catch (Exception ex)
                 {
+                    UpdateDbSet(item, oldProps);
+
                     resType = ResType.Error;
                     result.info.Add(
                         "Admin_IndexModel.SaveChangesAsync", 
                         ["Exception: " + ex.Message]);
                 }
 
-                return await PageWithResult(result, resType);
+                return PageWithResult(result, resType);
             }
 
         }
@@ -207,7 +202,7 @@ public class Admin_IndexModel<T> : PageModel where T : class
             result.info.Add(
                 "Admin_IndexModel.OnPostUpdateAsync", 
                 ["Transaction exception: " + ex.Message]);
-            return await PageWithResult(result, ResType.Error);
+            return PageWithResult(result, ResType.Error);
         }
 
         return RedirectToPage();
