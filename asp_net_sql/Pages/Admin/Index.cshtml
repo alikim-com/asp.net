@@ -4,9 +4,24 @@
 
 @using asp_net_sql.Models
 @using asp_net_sql.Pages
-@model Admin_IndexModel<EnumGameRoster>
+@model Admin_IndexModel<EnumGameState>
+
 
 @{
+
+    /*
+     * @{
+    Type modelType = typeof(YourDynamicType);
+    var pageModelType = typeof(Admin_IndexModel<>).MakeGenericType(modelType);
+        }
+
+        @model pageModelType
+     *
+     */
+
+    var pageResult = ViewData["page"] 
+    as Microsoft.AspNetCore.Mvc.RazorPages.PageResult;
+
     ViewData["Title"] = "EnumGameRoster List";
     var DbSetNames = ViewData["DbSetNames"] as List<string>;
     var DbSetPropInfo = ViewData["DbSetPropInfo"] as List<PropertyInfo>;
@@ -53,22 +68,22 @@
                 {
                     row++;
                     var btnId = $"btn_{row}";
-                    <tr>
-                        @foreach (var pInf in DbSetPropInfo)
+                        <tr>
+                            @foreach (var pInf in DbSetPropInfo)
                         {
                             var inpId = $"inp_{pInf.Name}_{row}";
                             <td>
                                 <input id="@inpId" type="text" value="@pInf.GetValue(item)" />
                             </td>
                         }
-                        <td>
-                            <button id="@btnId"
-                                    type="submit"
-                                    asp-page-handler="Update">
-                                Change (Post)
-                            </button>
-                        </td>
-                    </tr>
+                            <td>
+                                <button id="@btnId"
+                                        type="submit"
+                                        asp-page-handler="Update">
+                                    Change (Post)
+                                </button>
+                            </td>
+                        </tr>
                 }
             }
         </tbody>
@@ -80,21 +95,25 @@
 
         const propArr = "@allProps".split(',');
 
-        const onClick = (row, btn) => {
-            let fa = `&row=${row}`;
+        const appendFormaction = (row, suf, btn) => {
+            let fa = "";
             for (const pr of propArr) {
                 const inp = document.getElementById(`inp_${pr}_${row}`);
-                fa += `&${pr}=${encodeURI(inp.value)}`;
+                fa += `&${pr}${suf}=${encodeURI(inp.value)}`;
             }
             const attr = btn.getAttribute('formaction');
             btn.setAttribute('formaction', attr + fa);
-        };
+        }
 
         for (let row = 0; row < @row; row++) {
+
             const btn = document.getElementById(`btn_${row}`);
+
+            appendFormaction(row, '_old', btn);
+
             btn.addEventListener('click', evt => {
                 // evt.preventDefault();
-                onClick(row, btn);
+                appendFormaction(row, '_new', btn);
             });
         }
     });

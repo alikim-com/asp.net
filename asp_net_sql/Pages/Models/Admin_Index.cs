@@ -10,7 +10,27 @@ namespace asp_net_sql.Pages;
 
 public static class EntityHelper
 {
-    public static Dictionary<Type, object?> GetDbSetsInfo(TicTacToe_Context dbContext)
+    public static List<string> GetDbSetNames(TicTacToe_Context dbContext) => 
+        dbContext.GetType().GetProperties().Where(p =>
+            p.PropertyType.IsGenericType &&
+            p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>))
+            .Select(p => p.PropertyType.GetGenericArguments()[0].Name).ToList();
+
+    public static List<T> GetDbSet<T>(TicTacToe_Context dbContext) where T : class
+    {
+        var typePInf = dbContext.GetType().GetProperties()
+        .FirstOrDefault(p => p.PropertyType == typeof(DbSet<T>));
+
+        var dbSetGen = typePInf?.GetValue(dbContext);
+
+        if (dbSetGen is not DbSet<T> dbSet)
+            throw new Exception($"EntityHelper.GetDbSet : error getting DbSet<{nameof(T)}> from dbContext");
+
+        return [.. dbSet];
+    }
+
+    /*
+       public static Dictionary<Type, object?> GetDbSetsNames(TicTacToe_Context dbContext)
     {
         var dbSetProperties = dbContext.GetType().GetProperties()
             .Where(p => p.PropertyType.IsGenericType &&
@@ -23,6 +43,9 @@ public static class EntityHelper
 
         return infoDict;
     }
+     
+     */
+
 
     public static List<PropertyInfo> GetClassPropInfo<T>() where T : class
     {
@@ -52,29 +75,27 @@ public class Result(
 
 public class Admin_IndexModel<T> : PageModel where T : class
 {
-    private readonly TicTacToe_Context dbContext;
+    readonly TicTacToe_Context dbContext;
+    readonly Type DbSetType = typeof(T);
 
     readonly List<string> DbSetNames;
 
-    readonly DbSet<T> DbSet;
-    readonly Type DbSetType = typeof(T);
+    readonly List<T> DbSet;
+    
     readonly List<PropertyInfo> DbSetPropInfo;
     readonly List<string> DbSetPKeys;
 
     public List<T> AsyncDbSetItems = [];
 
+    PageResult? pageResult;
+
     public Admin_IndexModel(TicTacToe_Context _dbContext)
     {
         dbContext = _dbContext;
 
-        var dict = EntityHelper.GetDbSetsInfo(dbContext);
+        DbSetNames = EntityHelper.GetDbSetNames(dbContext);
 
-        DbSetNames = dict.Keys.Select(k => k.Name).ToList();
-
-        if (!dict.TryGetValue(DbSetType, out var obj))
-            throw new Exception($"Admin_IndexModel.Ctor : type '{DbSetType}' not found");
-
-        DbSet = (DbSet<T>)obj!;
+        DbSet = EntityHelper.GetDbSet<T>(dbContext);
 
         DbSetPropInfo = EntityHelper.GetClassPropInfo<T>();
 
@@ -83,6 +104,14 @@ public class Admin_IndexModel<T> : PageModel where T : class
             throw new Exception($"Admin_IndexModel.Ctor : pkey not found for type '{DbSetType}'");
         DbSetPKeys = pKey.Properties.Select(p => p.Name).ToList();
     }
+
+    public Dictionary<string, object> TypedPropsFromQuery(IQueryCollection? qry, string suf) =>
+        qry == null ? [] :
+        DbSetPropInfo.Select(ent =>
+            new KeyValuePair<string, object>(
+                ent.Name,
+                Convert.ChangeType(qry[ent.Name + suf].ToString(), ent.PropertyType)
+            )).ToDictionary();
 
     public async Task OnGetAsync()
     {
@@ -97,7 +126,15 @@ public class Admin_IndexModel<T> : PageModel where T : class
         result.type = type;
         ViewData["Result"] = result;
         await OnGetAsync();
-        return Page();
+        pageResult = Page();
+        ViewData["page"] = pageResult;
+
+        //var method = pageResult.Page.PageContext.HttpContext.Request.Method;
+
+        //var pCont = new PageContext();
+        //pCont.HttpContext.Request.Method = m;
+
+        return pageResult;
     }
 
     public async Task<IActionResult> OnPostUpdateAsync()
@@ -108,26 +145,16 @@ public class Admin_IndexModel<T> : PageModel where T : class
             .BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead);
         try
         {
-            AsyncDbSetItems = await DbSet.ToListAsync();
-            foreach(var pk in DbSetPKeys)
-            {
-               // DbSetPropInfo
-            }
-
-            
-           // var item = AsyncDbSetItems.Find()
-
             var qry = HttpContext.Request.Query;
 
-            var typedProps = DbSetPropInfo.Select(ent =>
-                new KeyValuePair<string, object>(
-                    ent.Name,
-                    Convert.ChangeType(qry[ent.Name].ToString(), ent.PropertyType)
-                )).ToDictionary();
+            var oldProps = TypedPropsFromQuery(qry, "_old");
+            var newProps = TypedPropsFromQuery(qry, "_new");
 
-            object[] PKeyValues = DbSetPKeys.Select(pk => typedProps[pk]).ToArray();
+            AsyncDbSetItems = await DbSet.ToListAsync();
 
+            object[] PKeyValues = DbSetPKeys.Select(pk => oldProps[pk]).ToArray();
             var item = await DbSet.FindAsync(PKeyValues);
+
             if (item != null)
             {
                 if (!ModelState.IsValid)
@@ -138,7 +165,7 @@ public class Admin_IndexModel<T> : PageModel where T : class
                         if (value != null && value.ValidationState == Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Invalid)
                         {
                             var errors = value.Errors.Select(ent => ent.ErrorMessage).ToArray();
-                            result.info.Add(key, errors);
+                            result.info.Add("<Invalid model> " + key, errors);
                         }
                     }
                     return await PageWithResult(result, ResType.Error);
@@ -146,7 +173,7 @@ public class Admin_IndexModel<T> : PageModel where T : class
 
                 // update table
                 foreach (var pInf in DbSetPropInfo)
-                    pInf.SetValue(item, typedProps[pInf.Name]);
+                    pInf.SetValue(item, newProps[pInf.Name]);
 
                 ResType resType;
 
@@ -170,9 +197,7 @@ public class Admin_IndexModel<T> : PageModel where T : class
                 }
 
                 return await PageWithResult(result, resType);
-
             }
-
 
         }
         catch (Exception ex)
