@@ -5,17 +5,31 @@ using Microsoft.EntityFrameworkCore;
 using static asp_net_sql.Pages.Result;
 
 using System.Reflection;
-using System.Diagnostics;
+using asp_net_sql.Models;
 
 namespace asp_net_sql.Pages;
 
 public static class EntityHelper
 {
-    public static List<string> GetDbSetNames(TicTacToe_Context dbContext) => 
+    public static Type MakeGenericType(string genericType, string typeArgument)
+    {
+        Type? generic = Type.GetType(genericType) ?? throw new Exception
+            ($"EntityHelper.MakeGenericType : generic type '{genericType}' not found");
+        Type? argument = Type.GetType(typeArgument) ?? throw new Exception
+            ($"EntityHelper.MakeGenericType : argument type '{typeArgument}' not found");
+
+        return generic.MakeGenericType(argument);
+        //return Activator.CreateInstance(constructed);
+    }
+
+    public static Dictionary<string, Type> GetDbSetInfo(TicTacToe_Context dbContext) => 
         dbContext.GetType().GetProperties().Where(p =>
             p.PropertyType.IsGenericType &&
             p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>))
-            .Select(p => p.PropertyType.GetGenericArguments()[0].Name).ToList();
+            .Select(p => new KeyValuePair<string, Type>(
+                p.PropertyType.GetGenericArguments()[0].Name,
+                p.PropertyType
+                )).ToDictionary();
 
     public static DbSet<T> GetDbSet<T>(TicTacToe_Context dbContext) where T : class
     {
@@ -56,36 +70,42 @@ public class Result(
     public Dictionary<string, string[]> info = _info ?? [];
 }
 
-public class Admin_IndexModel<T> : PageModel where T : class
+public class Admin_IndexModel : PageModel
 {
     readonly TicTacToe_Context dbContext;
 
-    readonly List<string> DbSetNames;
+    readonly Dictionary<string, Type> DbSetInfo;
 
-    readonly DbSet<T> DbSet;
-    readonly List<PropertyInfo> DbSetPropInfo;
-    readonly List<string> DbSetPKeys;
+    List<PropertyInfo> DbSetPropInfo = [];
+    List<string> DbSetPKeys = [];
 
-    public List<T> AsyncDbSetItems;
+    object DbSet = new();
+    object AsyncDbSetItems = new();
+
+    //readonly DbSet<T> DbSet;
+    //public List<T> AsyncDbSetItems;
+
+    [BindProperty(SupportsGet = true)]
+    public string DbSetTEntityName { get; set; } = "";
 
     public Admin_IndexModel(TicTacToe_Context _dbContext)
     {
         dbContext = _dbContext;
 
-        DbSetNames = EntityHelper.GetDbSetNames(dbContext);
+        DbSetInfo = EntityHelper.GetDbSetInfo(dbContext);
 
-        DbSet = EntityHelper.GetDbSet<T>(dbContext);
+        //DbSet = EntityHelper.GetDbSet<T>(dbContext);
 
-        DbSetPropInfo = EntityHelper.GetClassPropInfo<T>();
+        //DbSetPropInfo = EntityHelper.GetClassPropInfo<T>();
 
-        var DbSetType = typeof(T);
-        var entityType = dbContext.Model.FindEntityType(DbSetType);
-        var pKey = (entityType?.FindPrimaryKey()) ?? 
-            throw new Exception($"Admin_IndexModel.Ctor : pkey not found for type '{DbSetType}'");
+        //var DbSetType = typeof(T);
+        //var entityType = dbContext.Model.FindEntityType(DbSetType);
+        //var pKey = (entityType?.FindPrimaryKey()) ?? 
+        //    throw new Exception($"Admin_IndexModel.Ctor : pkey not found for type '{DbSetType}'");
 
-        DbSetPKeys = pKey.Properties.Select(p => p.Name).ToList();
+        //DbSetPKeys = pKey.Properties.Select(p => p.Name).ToList();
 
-        AsyncDbSetItems = [];
+        //AsyncDbSetItems = [];
     }
 
     Dictionary<string, object> TypedPropsFromQuery(IQueryCollection? qry, string suf) =>
@@ -98,7 +118,7 @@ public class Admin_IndexModel<T> : PageModel where T : class
 
     void SetViewData()
     {
-        ViewData["DbSetNames"] ??= DbSetNames;
+        ViewData["DbSetNames"] ??= DbSetInfo.Keys.ToList();
         ViewData["DbSetPropInfo"] ??= DbSetPropInfo;
     }
 
@@ -108,7 +128,7 @@ public class Admin_IndexModel<T> : PageModel where T : class
     public async Task OnGetAsync()
     {
         SetViewData();
-        AsyncDbSetItems = await DbSet.ToListAsync();
+        //AsyncDbSetItems = await DbSet.ToListAsync();
     }
 
     /// <summary>
@@ -123,17 +143,19 @@ public class Admin_IndexModel<T> : PageModel where T : class
         return Page();
     }
 
-    void UpdateDbSet(T item, Dictionary<string, object> props)
-    {
-        foreach (var pInf in DbSetPropInfo)
-            pInf.SetValue(item, props[pInf.Name]);
-    }
+    //void UpdateDbSet(T item, Dictionary<string, object> props)
+    //{
+    //    foreach (var pInf in DbSetPropInfo)
+    //        pInf.SetValue(item, props[pInf.Name]);
+    //}
 
     /// <summary>
     /// Runs after Ctor
     /// </summary>
     public async Task<IActionResult> OnPostUpdateAsync()
     {
+        var formData = Request.Form;
+
         var result = new Result();
 
         using var transaction = await dbContext.Database
@@ -145,10 +167,10 @@ public class Admin_IndexModel<T> : PageModel where T : class
             var oldProps = TypedPropsFromQuery(qry, "_old");
             var newProps = TypedPropsFromQuery(qry, "_new");
 
-            AsyncDbSetItems = await DbSet.ToListAsync();
+           // AsyncDbSetItems = await DbSet.ToListAsync();
 
             object[] PKeyValues = DbSetPKeys.Select(pk => oldProps[pk]).ToArray();
-            var item = await DbSet.FindAsync(PKeyValues);
+            var item = dbContext.Chosens;// await DbSet.FindAsync(PKeyValues);
 
             if (item != null)
             {
@@ -166,7 +188,7 @@ public class Admin_IndexModel<T> : PageModel where T : class
                     return PageWithResult(result, ResType.Error);
                 }
 
-                UpdateDbSet(item, newProps);
+               // UpdateDbSet(item, newProps);
 
                 ResType resType;
 
@@ -183,7 +205,7 @@ public class Admin_IndexModel<T> : PageModel where T : class
                 }
                 catch (Exception ex)
                 {
-                    UpdateDbSet(item, oldProps);
+                  //  UpdateDbSet(item, oldProps);
 
                     resType = ResType.Error;
                     result.info.Add(

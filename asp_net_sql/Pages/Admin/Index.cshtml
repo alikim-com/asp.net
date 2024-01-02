@@ -1,10 +1,10 @@
-﻿@page "{DbSetName?}"
+﻿@page "{DbSetTEntityName}"
 
 @using System.Reflection;
 
 @using asp_net_sql.Models
 @using asp_net_sql.Pages
-@model Admin_IndexModel<EnumGameState>
+@model Admin_IndexModel
 
 @{
     // @RouteData.Values["DbSetName"]
@@ -71,6 +71,11 @@
                 //             </td>
                 //         </tr>
                 // }
+                <button id="btnId"
+                    type="submit"
+                    asp-page-handler="Update">
+                    Change (Post)
+                </button>
             }
         </tbody>
     </table>
