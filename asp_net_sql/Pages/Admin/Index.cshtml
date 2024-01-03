@@ -7,7 +7,6 @@
 @model Admin_IndexModel
 
 @{
-    // @RouteData.Values["DbSetName"]
     ViewData["Title"] = "EnumGameRoster List";
     var DbSetNames = ViewData["DbSetNames"] as List<string>;
     var DbSetPropInfo = ViewData["DbSetPropInfo"] as List<PropertyInfo>;
@@ -50,27 +49,29 @@
         </thead>
         <tbody>
             @{
-                // foreach (var item in Model.AsyncDbSetItems)
-                // {
-                //     row++;
-                //     var btnId = $"btn_{row}";
-                //         <tr>
-                //             @foreach (var pInf in DbSetPropInfo)
-                //         {
-                //             var inpId = $"inp_{pInf.Name}_{row}";
-                //             <td>
-                //                 <input id="@inpId" type="text" value="@pInf.GetValue(item)" />
-                //             </td>
-                //         }
-                //             <td>
-                //                 <button id="@btnId"
-                //                         type="submit"
-                //                         asp-page-handler="Update">
-                //                     Change (Post)
-                //                 </button>
-                //             </td>
-                //         </tr>
-                // }
+                var items = Convert.ChangeType
+                    (Model.AsyncDbSetItems, Model.AsyncDbSetItems.GetType());
+                foreach (var item in (dynamic)items)
+                {
+                    row++;
+                    var btnId = $"btn_{row}";
+                        <tr>
+                            @foreach (var pInf in DbSetPropInfo)
+                        {
+                            var inpId = $"inp_{pInf.Name}_{row}";
+                            <td>
+                                <input id="@inpId" type="text" value="@pInf.GetValue(item)" />
+                            </td>
+                        }
+                            <td>
+                                <button id="@btnId"
+                                        type="submit"
+                                        asp-page-handler="Update">
+                                    Change (Post)
+                                </button>
+                            </td>
+                        </tr>
+                }
                 <button id="btnId"
                     type="submit"
                     asp-page-handler="Update">

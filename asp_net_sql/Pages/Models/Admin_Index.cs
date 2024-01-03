@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using static asp_net_sql.Pages.Result;
 
 using System.Reflection;
-using asp_net_sql.Models;
 
 namespace asp_net_sql.Pages;
 
@@ -19,16 +18,23 @@ public static class EntityHelper
             ($"EntityHelper.MakeGenericType : argument type '{typeArgument}' not found");
 
         return generic.MakeGenericType(argument);
-        //return Activator.CreateInstance(constructed);
     }
 
-    public static Dictionary<string, Type> GetDbSetInfo(TicTacToe_Context dbContext) => 
+    public static MethodInfo MakeGenericMethod(Type T, string methodName, Type tArgument)
+    {
+        MethodInfo genericMethod = T.GetMethod(methodName) ?? throw new Exception
+            ($"EntityHelper.MakeGenericMethod : no method {methodName} found for type {T.Name}");
+
+        return genericMethod.MakeGenericMethod(tArgument);
+    }
+
+    public static Dictionary<string, Type> GetDbSetInfo(TicTacToe_Context dbContext) =>
         dbContext.GetType().GetProperties().Where(p =>
             p.PropertyType.IsGenericType &&
             p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>))
             .Select(p => new KeyValuePair<string, Type>(
                 p.PropertyType.GetGenericArguments()[0].Name,
-                p.PropertyType
+                p.PropertyType.GetGenericArguments()[0]
                 )).ToDictionary();
 
     public static DbSet<T> GetDbSet<T>(TicTacToe_Context dbContext) where T : class
@@ -80,7 +86,11 @@ public class Admin_IndexModel : PageModel
     List<string> DbSetPKeys = [];
 
     object DbSet = new();
-    object AsyncDbSetItems = new();
+
+    Type? DbSetType;
+    MethodInfo? ToListAsyncGen;
+
+    public object AsyncDbSetItems = new();
 
     //readonly DbSet<T> DbSet;
     //public List<T> AsyncDbSetItems;
@@ -108,6 +118,36 @@ public class Admin_IndexModel : PageModel
         //AsyncDbSetItems = [];
     }
 
+    public void DeferredCtor()
+    {
+        if (!DbSetInfo.TryGetValue(DbSetTEntityName, out Type? TEntity)) throw new Exception
+            ($"Admin_IndexModel.DeferredCtor : no entity type found for {DbSetTEntityName}");
+
+        var GetDbSetGen = EntityHelper.MakeGenericMethod(typeof(EntityHelper), "GetDbSet", TEntity);
+
+        DbSet = GetDbSetGen.Invoke(null, [dbContext]) ?? throw new Exception
+            ($"Admin_IndexModel.DeferredCtor : GetDbSet<{TEntity.Name}> invokation returned null");
+
+        ToListAsyncGen = EntityHelper.MakeGenericMethod(
+            typeof(EntityFrameworkQueryableExtensions),
+            "ToListAsync",
+            TEntity
+            ) ?? throw new Exception
+            ($"Admin_IndexModel.DeferredCtor : ToListAsyncGen<{TEntity.Name}> is null");
+
+        DbSetType = DbSet.GetType();
+
+        //DbSetPropInfo = EntityHelper.GetClassPropInfo<T>();
+
+        //var entityType = dbContext.Model.FindEntityType(TEntity);
+        //var pKey = (entityType?.FindPrimaryKey()) ??
+        //    throw new Exception($"Admin_IndexModel.Ctor : pkey not found for type '{TEntity}'");
+
+        //DbSetPKeys = pKey.Properties.Select(p => p.Name).ToList();
+
+        //AsyncDbSetItems = [];
+    }
+
     Dictionary<string, object> TypedPropsFromQuery(IQueryCollection? qry, string suf) =>
         qry == null ? [] :
         DbSetPropInfo.Select(ent =>
@@ -127,8 +167,12 @@ public class Admin_IndexModel : PageModel
     /// </summary>
     public async Task OnGetAsync()
     {
+        DeferredCtor();
+
         SetViewData();
-        //AsyncDbSetItems = await DbSet.ToListAsync();
+
+        AsyncDbSetItems = await (dynamic)ToListAsyncGen!.Invoke
+            (null, new object[] { DbSet, default(CancellationToken) })!;
     }
 
     /// <summary>
@@ -154,6 +198,8 @@ public class Admin_IndexModel : PageModel
     /// </summary>
     public async Task<IActionResult> OnPostUpdateAsync()
     {
+        DeferredCtor();
+
         var formData = Request.Form;
 
         var result = new Result();
@@ -167,7 +213,7 @@ public class Admin_IndexModel : PageModel
             var oldProps = TypedPropsFromQuery(qry, "_old");
             var newProps = TypedPropsFromQuery(qry, "_new");
 
-           // AsyncDbSetItems = await DbSet.ToListAsync();
+            // AsyncDbSetItems = await DbSet.ToListAsync();
 
             object[] PKeyValues = DbSetPKeys.Select(pk => oldProps[pk]).ToArray();
             var item = dbContext.Chosens;// await DbSet.FindAsync(PKeyValues);
@@ -188,7 +234,7 @@ public class Admin_IndexModel : PageModel
                     return PageWithResult(result, ResType.Error);
                 }
 
-               // UpdateDbSet(item, newProps);
+                // UpdateDbSet(item, newProps);
 
                 ResType resType;
 
@@ -205,11 +251,11 @@ public class Admin_IndexModel : PageModel
                 }
                 catch (Exception ex)
                 {
-                  //  UpdateDbSet(item, oldProps);
+                    //  UpdateDbSet(item, oldProps);
 
                     resType = ResType.Error;
                     result.info.Add(
-                        "Admin_IndexModel.SaveChangesAsync", 
+                        "Admin_IndexModel.SaveChangesAsync",
                         ["Exception: " + ex.Message]);
                 }
 
@@ -222,7 +268,7 @@ public class Admin_IndexModel : PageModel
             await transaction.RollbackAsync();
 
             result.info.Add(
-                "Admin_IndexModel.OnPostUpdateAsync", 
+                "Admin_IndexModel.OnPostUpdateAsync",
                 ["Transaction exception: " + ex.Message]);
             return PageWithResult(result, ResType.Error);
         }
