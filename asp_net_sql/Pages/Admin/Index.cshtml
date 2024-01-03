@@ -7,32 +7,22 @@
 @model Admin_IndexModel
 
 @{
-    ViewData["Title"] = "EnumGameRoster List";
-    var DbSetNames = ViewData["DbSetNames"] as List<string>;
-    var DbSetPropInfo = ViewData["DbSetPropInfo"] as List<PropertyInfo>;
-    if (DbSetNames == null || DbSetPropInfo == null)
-    {
-        ViewData["Result"] = new Result(
-            Result.ResType.Error,
-            new Dictionary<string, string[]> {
-                {
-                    "Razor.Admin_IndexModel",
-                    new string[] { "ViewData missing or cast error" }
-                }
-            }
-        );
-        return;
-    }
+    var selfName = Model.DbSetTypeName;
+    ViewData["Title"] = $"{selfName} List";
+    var DbSetNames = Model.DbSetInfo.Keys.ToList();
+    var DbSetPropInfo = Model.DbSetPropInfo;
+
     var row = -1;
     var allProps = string.Join(",", DbSetPropInfo.Select(pInf => pInf.Name));
 }
 
-<h1>EnumGameRoster List</h1>
+<h1>@selfName List</h1>
 
 <menu id="adminMenu">
     @foreach (var menuItem in DbSetNames)
     {
-        <div class="menu">@menuItem</div>
+        var cls = menuItem == selfName ? "menu selected" : "menu";
+        <a class="@cls" href="./@menuItem">@menuItem</a>
     }
 </menu>
 
@@ -72,11 +62,6 @@
                             </td>
                         </tr>
                 }
-                <button id="btnId"
-                    type="submit"
-                    asp-page-handler="Update">
-                    Change (Post)
-                </button>
             }
         </tbody>
     </table>

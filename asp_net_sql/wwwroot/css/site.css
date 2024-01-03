@@ -62,3 +62,7 @@ button:hover {
     justify-content: space-between;
     padding: 0px;
 }
+
+a.menu.selected {
+    font-weight: bold;
+}

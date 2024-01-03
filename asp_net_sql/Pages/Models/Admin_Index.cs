@@ -80,20 +80,19 @@ public class Admin_IndexModel : PageModel
 {
     readonly TicTacToe_Context dbContext;
 
-    readonly Dictionary<string, Type> DbSetInfo;
+    public readonly Dictionary<string, Type> DbSetInfo;
 
-    List<PropertyInfo> DbSetPropInfo = [];
+    public List<PropertyInfo> DbSetPropInfo = [];
+
     List<string> DbSetPKeys = [];
 
     object DbSet = new();
 
-    Type? DbSetType;
+    public string DbSetTypeName = "";
+
     MethodInfo? ToListAsyncGen;
 
     public object AsyncDbSetItems = new();
-
-    //readonly DbSet<T> DbSet;
-    //public List<T> AsyncDbSetItems;
 
     [BindProperty(SupportsGet = true)]
     public string DbSetTEntityName { get; set; } = "";
@@ -103,19 +102,6 @@ public class Admin_IndexModel : PageModel
         dbContext = _dbContext;
 
         DbSetInfo = EntityHelper.GetDbSetInfo(dbContext);
-
-        //DbSet = EntityHelper.GetDbSet<T>(dbContext);
-
-        //DbSetPropInfo = EntityHelper.GetClassPropInfo<T>();
-
-        //var DbSetType = typeof(T);
-        //var entityType = dbContext.Model.FindEntityType(DbSetType);
-        //var pKey = (entityType?.FindPrimaryKey()) ?? 
-        //    throw new Exception($"Admin_IndexModel.Ctor : pkey not found for type '{DbSetType}'");
-
-        //DbSetPKeys = pKey.Properties.Select(p => p.Name).ToList();
-
-        //AsyncDbSetItems = [];
     }
 
     public void DeferredCtor()
@@ -123,7 +109,10 @@ public class Admin_IndexModel : PageModel
         if (!DbSetInfo.TryGetValue(DbSetTEntityName, out Type? TEntity)) throw new Exception
             ($"Admin_IndexModel.DeferredCtor : no entity type found for {DbSetTEntityName}");
 
-        var GetDbSetGen = EntityHelper.MakeGenericMethod(typeof(EntityHelper), "GetDbSet", TEntity);
+        var GetDbSetGen = EntityHelper.MakeGenericMethod(
+            typeof(EntityHelper),
+            "GetDbSet",
+            TEntity);
 
         DbSet = GetDbSetGen.Invoke(null, [dbContext]) ?? throw new Exception
             ($"Admin_IndexModel.DeferredCtor : GetDbSet<{TEntity.Name}> invokation returned null");
@@ -135,9 +124,17 @@ public class Admin_IndexModel : PageModel
             ) ?? throw new Exception
             ($"Admin_IndexModel.DeferredCtor : ToListAsyncGen<{TEntity.Name}> is null");
 
-        DbSetType = DbSet.GetType();
+        DbSetTypeName = TEntity.Name;
 
-        //DbSetPropInfo = EntityHelper.GetClassPropInfo<T>();
+        var GetClassPropInfoGen = EntityHelper.MakeGenericMethod(
+            typeof(EntityHelper), 
+            "GetClassPropInfo", 
+            TEntity);
+
+        object _DbSetPropInfo = GetClassPropInfoGen.Invoke(null, []) ?? throw new Exception
+            ($"Admin_IndexModel.DeferredCtor : GetDbSet<{TEntity.Name}> invokation returned null");
+
+        DbSetPropInfo = (List<PropertyInfo>)_DbSetPropInfo;
 
         //var entityType = dbContext.Model.FindEntityType(TEntity);
         //var pKey = (entityType?.FindPrimaryKey()) ??
@@ -156,20 +153,12 @@ public class Admin_IndexModel : PageModel
                 Convert.ChangeType(qry[ent.Name + suf].ToString(), ent.PropertyType)
             )).ToDictionary();
 
-    void SetViewData()
-    {
-        ViewData["DbSetNames"] ??= DbSetInfo.Keys.ToList();
-        ViewData["DbSetPropInfo"] ??= DbSetPropInfo;
-    }
-
     /// <summary>
     /// Runs after Ctor
     /// </summary>
     public async Task OnGetAsync()
     {
         DeferredCtor();
-
-        SetViewData();
 
         AsyncDbSetItems = await (dynamic)ToListAsyncGen!.Invoke
             (null, new object[] { DbSet, default(CancellationToken) })!;
@@ -182,7 +171,6 @@ public class Admin_IndexModel : PageModel
     {
         result.type = type;
         ViewData["Result"] = result;
-        SetViewData();
 
         return Page();
     }
