@@ -7,7 +7,7 @@
 @model Admin_IndexModel
 
 @{
-    var selfName = Model.DbSetTypeName;
+    var selfName = Model.DbSetTEntityName;
     ViewData["Title"] = $"{selfName} List";
     var DbSetNames = Model.DbSetInfo.Keys.ToList();
     var DbSetPropInfo = Model.DbSetPropInfo;

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using static asp_net_sql.Pages.Result;
 
 using System.Reflection;
+using asp_net_sql.Models;
 
 namespace asp_net_sql.Pages;
 
@@ -88,9 +89,8 @@ public class Admin_IndexModel : PageModel
 
     object DbSet = new();
 
-    public string DbSetTypeName = "";
-
     MethodInfo? ToListAsyncGen;
+    MethodInfo? FindAsyncGen;
 
     public object AsyncDbSetItems = new();
 
@@ -124,7 +124,9 @@ public class Admin_IndexModel : PageModel
             ) ?? throw new Exception
             ($"Admin_IndexModel.DeferredCtor : ToListAsyncGen<{TEntity.Name}> is null");
 
-        DbSetTypeName = TEntity.Name;
+        // the one w/o cancellation token
+        FindAsyncGen = DbSet.GetType().GetMethods().FirstOrDefault
+            (m => m.Name == "FindAsync" && m.GetParameters().Length == 1);
 
         var GetClassPropInfoGen = EntityHelper.MakeGenericMethod(
             typeof(EntityHelper), 
@@ -136,13 +138,11 @@ public class Admin_IndexModel : PageModel
 
         DbSetPropInfo = (List<PropertyInfo>)_DbSetPropInfo;
 
-        //var entityType = dbContext.Model.FindEntityType(TEntity);
-        //var pKey = (entityType?.FindPrimaryKey()) ??
-        //    throw new Exception($"Admin_IndexModel.Ctor : pkey not found for type '{TEntity}'");
+        var entityType = dbContext.Model.FindEntityType(TEntity);
+        var pKey = (entityType?.FindPrimaryKey()) ??
+            throw new Exception($"Admin_IndexModel.Ctor : pkey not found for type '{TEntity}'");
 
-        //DbSetPKeys = pKey.Properties.Select(p => p.Name).ToList();
-
-        //AsyncDbSetItems = [];
+        DbSetPKeys = pKey.Properties.Select(p => p.Name).ToList();
     }
 
     Dictionary<string, object> TypedPropsFromQuery(IQueryCollection? qry, string suf) =>
@@ -153,20 +153,17 @@ public class Admin_IndexModel : PageModel
                 Convert.ChangeType(qry[ent.Name + suf].ToString(), ent.PropertyType)
             )).ToDictionary();
 
-    /// <summary>
-    /// Runs after Ctor
-    /// </summary>
+    // must pass params w/ def values
+    async Task DbSetToListAsync() => AsyncDbSetItems = await (dynamic)ToListAsyncGen!.Invoke
+            (null, new object[] { DbSet, default(CancellationToken) })!;
+
     public async Task OnGetAsync()
     {
         DeferredCtor();
 
-        AsyncDbSetItems = await (dynamic)ToListAsyncGen!.Invoke
-            (null, new object[] { DbSet, default(CancellationToken) })!;
+        await DbSetToListAsync();
     }
 
-    /// <summary>
-    /// Runs after OnPost, followed by RazorPage
-    /// </summary>
     PageResult PageWithResult(Result result, ResType type)
     {
         result.type = type;
@@ -181,9 +178,6 @@ public class Admin_IndexModel : PageModel
     //        pInf.SetValue(item, props[pInf.Name]);
     //}
 
-    /// <summary>
-    /// Runs after Ctor
-    /// </summary>
     public async Task<IActionResult> OnPostUpdateAsync()
     {
         DeferredCtor();
@@ -201,10 +195,12 @@ public class Admin_IndexModel : PageModel
             var oldProps = TypedPropsFromQuery(qry, "_old");
             var newProps = TypedPropsFromQuery(qry, "_new");
 
-            // AsyncDbSetItems = await DbSet.ToListAsync();
+            await DbSetToListAsync();
 
             object[] PKeyValues = DbSetPKeys.Select(pk => oldProps[pk]).ToArray();
-            var item = dbContext.Chosens;// await DbSet.FindAsync(PKeyValues);
+
+            var item = await (dynamic)FindAsyncGen!.Invoke
+                (DbSet, new object[] { PKeyValues })!;
 
             if (item != null)
             {
@@ -222,7 +218,7 @@ public class Admin_IndexModel : PageModel
                     return PageWithResult(result, ResType.Error);
                 }
 
-                // UpdateDbSet(item, newProps);
+                //UpdateDbSet(item, newProps);
 
                 ResType resType;
 
@@ -239,7 +235,7 @@ public class Admin_IndexModel : PageModel
                 }
                 catch (Exception ex)
                 {
-                    //  UpdateDbSet(item, oldProps);
+                    //UpdateDbSet(item, oldProps);
 
                     resType = ResType.Error;
                     result.info.Add(
