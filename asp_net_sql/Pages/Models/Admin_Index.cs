@@ -172,11 +172,11 @@ public class Admin_IndexModel : PageModel
         return Page();
     }
 
-    //void UpdateDbSet(T item, Dictionary<string, object> props)
-    //{
-    //    foreach (var pInf in DbSetPropInfo)
-    //        pInf.SetValue(item, props[pInf.Name]);
-    //}
+    void UpdateDbSet(object item, Dictionary<string, object> props)
+    {
+        foreach (var pInf in DbSetPropInfo)
+            pInf.SetValue(item, props[pInf.Name]);
+    }
 
     public async Task<IActionResult> OnPostUpdateAsync()
     {
@@ -218,7 +218,7 @@ public class Admin_IndexModel : PageModel
                     return PageWithResult(result, ResType.Error);
                 }
 
-                //UpdateDbSet(item, newProps);
+                UpdateDbSet(item, newProps);
 
                 ResType resType;
 
@@ -235,7 +235,7 @@ public class Admin_IndexModel : PageModel
                 }
                 catch (Exception ex)
                 {
-                    //UpdateDbSet(item, oldProps);
+                    UpdateDbSet(item, oldProps);
 
                     resType = ResType.Error;
                     result.info.Add(
