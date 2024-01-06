@@ -6,6 +6,7 @@ using static asp_net_sql.Pages.Result;
 
 using System.Reflection;
 using asp_net_sql.Models;
+using Microsoft.AspNetCore.Mvc.Razor;
 
 namespace asp_net_sql.Pages;
 
@@ -77,6 +78,13 @@ public class Result(
     public Dictionary<string, string[]> info = _info ?? [];
 }
 
+/// <summary>
+/// Uses DeferredCtor to effectively implement
+/// generic class version
+/// Admin_IndexModel<DbSetTEntityName>
+/// and generic model for the Razor page
+/// @model Admin_IndexModel<DbSetTEntityName>
+/// </summary>
 public class Admin_IndexModel : PageModel
 {
     readonly TicTacToe_Context dbContext;

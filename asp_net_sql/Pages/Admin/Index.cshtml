@@ -10,7 +10,20 @@
     var selfName = Model.DbSetTEntityName;
     ViewData["Title"] = $"{selfName} List";
     var DbSetNames = Model.DbSetInfo.Keys.ToList();
-    var DbSetPropInfo = Model.DbSetPropInfo;
+    var DbSetPropInfo = Model.ViewDataGen.DbSetPropInfo;
+
+    if (DbSetNames == null || DbSetPropInfo == null)
+    {
+        ViewData["Result"] = new Result(
+            Result.ResType.Error,
+            new Dictionary<string, string[]> {
+                {
+                    "Razor.Admin_IndexModel",
+                    new string[] { "ViewData missing" }
+                }
+            });
+        return;
+    }
 
     var row = -1;
     var allProps = string.Join(",", DbSetPropInfo.Select(pInf => pInf.Name));
@@ -39,8 +52,10 @@
         </thead>
         <tbody>
             @{
-                var items = Convert.ChangeType
-                    (Model.AsyncDbSetItems, Model.AsyncDbSetItems.GetType());
+                // var items = Convert.ChangeType
+                //   (Model.AsyncDbSetItemsGen, Model.AsyncDbSetItemsGen.GetType());
+
+                var items = Model.ViewDataGen.AsyncDbSetItems ?? [];
                 foreach (var item in (dynamic)items)
                 {
                     row++;
@@ -67,30 +82,32 @@
     </table>
 </form>
 
+<!-- DYNAMICALLY ADD OLD VALUES HIDDEN INPUT FIELDS TO THE FORM -->
+
 <script type="module">
     window.addEventListener('load', () => {
 
         const propArr = "@allProps".split(',');
 
-        const appendFormaction = (row, suf, btn) => {
-            let fa = "";
-            for (const pr of propArr) {
-                const inp = document.getElementById(`inp_${pr}_${row}`);
-                fa += `&${pr}${suf}=${encodeURI(inp.value)}`;
-            }
-            const attr = btn.getAttribute('formaction');
-            btn.setAttribute('formaction', attr + fa);
-        }
+        // const appendFormaction = (row, suf, btn) => {
+        //     let fa = "";
+        //     for (const pr of propArr) {
+        //         const inp = document.getElementById(`inp_${pr}_${row}`);
+        //         fa += `&${pr}${suf}=${encodeURI(inp.value)}`;
+        //     }
+        //     const attr = btn.getAttribute('formaction');
+        //     btn.setAttribute('formaction', attr + fa);
+        // }
 
         for (let row = 0; row < @row; row++) {
 
             const btn = document.getElementById(`btn_${row}`);
 
-            appendFormaction(row, '_old', btn);
+           // appendFormaction(row, '_old', btn);
 
             btn.addEventListener('click', evt => {
-                // evt.preventDefault();
-                appendFormaction(row, '_new', btn);
+                evt.preventDefault();
+               // appendFormaction(row, '_new', btn);
             });
         }
     });
