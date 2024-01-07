@@ -7,8 +7,6 @@
 @model Admin_IndexModel
 
 @{
-    var selfName = Model.DbSetTEntityName;
-    ViewData["Title"] = $"{selfName} List";
     var DbSetNames = Model.DbSetInfo.Keys.ToList();
     var DbSetPropInfo = Model.ViewDataGen.DbSetPropInfo;
 
@@ -21,9 +19,13 @@
                     "Razor.Admin_IndexModel",
                     new string[] { "ViewData missing" }
                 }
-            });
+                            });
         return;
     }
+
+    var selfName = Model.DbSetTEntityName;
+    ViewData["Title"] = $"{selfName} List";
+    ViewData["Result"] = Model.ViewDataGen.result;
 
     var row = -1;
     var allProps = string.Join(",", DbSetPropInfo.Select(pInf => pInf.Name));
@@ -39,7 +41,7 @@
     }
 </menu>
 
-<form method="post">
+<form id="fullForm" method="post">
     <table class="table">
         <thead>
             <tr>
@@ -52,62 +54,93 @@
         </thead>
         <tbody>
             @{
-                // var items = Convert.ChangeType
-                //   (Model.AsyncDbSetItemsGen, Model.AsyncDbSetItemsGen.GetType());
-
                 var items = Model.ViewDataGen.AsyncDbSetItems ?? [];
                 foreach (var item in (dynamic)items)
                 {
                     row++;
-                    var btnId = $"btn_{row}";
-                        <tr>
-                            @foreach (var pInf in DbSetPropInfo)
+                    var btnId = $"btn__{row}";
+                    <tr>
+                        @foreach (var pInf in DbSetPropInfo)
                         {
-                            var inpId = $"inp_{pInf.Name}_{row}";
+                            var inpId = $"inp__{pInf.Name}__{row}";
                             <td>
                                 <input id="@inpId" type="text" value="@pInf.GetValue(item)" />
                             </td>
                         }
-                            <td>
-                                <button id="@btnId"
-                                        type="submit"
-                                        asp-page-handler="Update">
-                                    Change (Post)
-                                </button>
-                            </td>
-                        </tr>
+                        <td>
+                            <button id="@btnId"
+                                    type="submit"
+                                    asp-page-handler="Update">
+                                Change (Post)
+                            </button>
+                        </td>
+                    </tr>
                 }
             }
         </tbody>
     </table>
 </form>
 
-<!-- DYNAMICALLY ADD OLD VALUES HIDDEN INPUT FIELDS TO THE FORM -->
-
 <script type="module">
+
+    // import { makeRequest } from '/js/network.js'
+    // const data =
+    // '{"jsonrpc":"2.0", "method":"condenser_api.get_dynamic_global_properties", "params":[], "id":1}';
+    //const req = await makeRequest(url, 'd', 'POST', 0, null, data);
+
     window.addEventListener('load', () => {
 
-        const propArr = "@allProps".split(',');
+        const propArr = '@allProps'.split(',');
 
-        // const appendFormaction = (row, suf, btn) => {
-        //     let fa = "";
-        //     for (const pr of propArr) {
-        //         const inp = document.getElementById(`inp_${pr}_${row}`);
-        //         fa += `&${pr}${suf}=${encodeURI(inp.value)}`;
-        //     }
-        //     const attr = btn.getAttribute('formaction');
-        //     btn.setAttribute('formaction', attr + fa);
-        // }
+        const get = id => document.getElementById(id);
+        const getAttr = (elem, attr) => elem.getAttribute(attr);
+
+        const createInputElem = (name, value) => {
+            const elem = document.createElement("input");
+            elem.setAttribute('name', name);
+            elem.value = value;
+            elem.type = "hidden";
+            return elem;
+        };
+
+        /**
+        * Create a new form on the fly to POST only one row of data
+        * clone verification token from the original form, if available
+        */
+        const createPartialForm = (pref, row) => {
+            const fullForm = get('fullForm');
+            const partForm = fullForm.cloneNode();
+            const pfId = `partForm__${pref}__${row}`;
+            partForm.id = pfId;
+
+            const inputRow = document.querySelectorAll(`input[id$="__${row}"]`);
+            inputRow.forEach(elem => {
+                const pInfName = getAttr(elem, 'id').split('__')[1];
+                const value = elem.value;
+                const oldVal = getAttr(elem, 'value');
+                const inpValue = createInputElem(pInfName, value);
+                const inpOldVal = createInputElem('old__' + pInfName, oldVal);
+                partForm.appendChild(inpValue);
+                partForm.appendChild(inpOldVal);
+            });
+
+            document.body.appendChild(partForm);
+
+            return pfId;
+        };
 
         for (let row = 0; row < @row; row++) {
 
-            const btn = document.getElementById(`btn_${row}`);
-
-           // appendFormaction(row, '_old', btn);
+            const btn = get(`btn__${row}`);
 
             btn.addEventListener('click', evt => {
                 evt.preventDefault();
-               // appendFormaction(row, '_new', btn);
+                const pfId = createPartialForm('update', row);
+                const partForm = get(pfId);
+                partForm.setAttribute('action', btn.getAttribute('formaction'));
+                const tokenElem = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (tokenElem) partForm.appendChild(tokenElem.cloneNode());
+                partForm.submit();
             });
         }
     });

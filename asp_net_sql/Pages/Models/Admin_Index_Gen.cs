@@ -104,7 +104,6 @@ public class Admin_IndexModel(TicTacToe_Context _dbContext) : PageModel
 
     void DeferredCtor()
     {
-
         var Admin_IndexModel_GenType = EntityHelper.MakeGenericType(
             typeof(Admin_IndexModel<>),
             "asp_net_sql.Models." + DbSetTEntityName) ?? throw new Exception
@@ -180,14 +179,6 @@ public class Admin_IndexModel<T> : PageModel where T : class
         AsyncDbSetItems = [];
     }
 
-    Dictionary<string, object> TypedPropsFromQuery(IQueryCollection? qry, string suf) =>
-        qry == null ? [] :
-        DbSetPropInfo.Select(ent =>
-            new KeyValuePair<string, object>(
-                ent.Name,
-                Convert.ChangeType(qry[ent.Name + suf].ToString(), ent.PropertyType)
-            )).ToDictionary();
-
     void SetParentView(
         Result? resultGen,
         List<PropertyInfo> DbSetPropInfo,
@@ -241,15 +232,14 @@ public class Admin_IndexModel<T> : PageModel where T : class
             .BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead);
         try
         {
-            var qry = Request.Query;
+            var formData = Request.Form.ToDictionary();
 
-            var oldProps = TypedPropsFromQuery(qry, "_old");
-            var newProps = TypedPropsFromQuery(qry, "_new");
+            // RESTORE TOKENS TO TYPED
 
             AsyncDbSetItems = await DbSet.ToListAsync();
 
-            object[] PKeyValues = DbSetPKeys.Select(pk => oldProps[pk]).ToArray();
-            var item = await DbSet.FindAsync(PKeyValues);
+            // object[] PKeyValues = DbSetPKeys.Select(pk => oldProps[pk]).ToArray();
+            object? item = null; // await DbSet.FindAsync(PKeyValues);
 
             if (item != null)
             {
@@ -268,7 +258,7 @@ public class Admin_IndexModel<T> : PageModel where T : class
                     return PageWithResult(result, ResType.Error);
                 }
 
-                UpdateDbSet(item, newProps);
+                //UpdateDbSet(item, newProps);
 
                 ResType resType;
 
@@ -285,7 +275,7 @@ public class Admin_IndexModel<T> : PageModel where T : class
                 }
                 catch (Exception ex)
                 {
-                    UpdateDbSet(item, oldProps);
+                    //UpdateDbSet(item, oldProps);
 
                     resType = ResType.Error;
                     result.info.Add(
