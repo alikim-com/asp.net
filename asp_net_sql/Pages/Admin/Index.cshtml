@@ -1,4 +1,4 @@
-﻿@page "{DbSetTEntityName}"
+﻿@page "{DbSetTEntityName?}"
 
 @using System.Reflection;
 
@@ -10,7 +10,7 @@
     var DbSetNames = Model.DbSetInfo.Keys.ToList();
     var DbSetPropInfo = Model.ViewDataGen.DbSetPropInfo;
 
-    if (DbSetNames == null || DbSetPropInfo == null)
+    if (DbSetNames == null)
     {
         ViewData["Result"] = new Result(
             Result.ResType.Error,
@@ -19,27 +19,35 @@
                     "Razor.Admin_IndexModel",
                     new string[] { "ViewData missing" }
                 }
-                            });
+            });
         return;
     }
 
     var selfName = Model.DbSetTEntityName;
     ViewData["Title"] = $"{selfName} List";
     ViewData["Result"] = Model.ViewDataGen.result;
-
-    var row = -1;
-    var allProps = string.Join(",", DbSetPropInfo.Select(pInf => pInf.Name));
 }
 
-<h1>@selfName List</h1>
+<h1>Admin</h1>
 
 <menu id="adminMenu">
     @foreach (var menuItem in DbSetNames)
     {
         var cls = menuItem == selfName ? "menu selected" : "menu";
-        <a class="@cls" href="./@menuItem">@menuItem</a>
+        <a class="@cls" href="/Admin/@menuItem">@menuItem</a>
     }
 </menu>
+
+@{
+    // the form below is shown only for /Admin/SomeTableName
+    // the end of page for /Admin/
+    if (selfName == "" || DbSetPropInfo == null) return;
+
+    var row = -1;
+    var allProps = string.Join(",", DbSetPropInfo.Select(pInf => pInf.Name));
+}
+
+<h2>@selfName</h2>
 
 <form id="fullForm" method="post">
     <table class="table">
@@ -82,11 +90,6 @@
 </form>
 
 <script type="module">
-
-    // import { makeRequest } from '/js/network.js'
-    // const data =
-    // '{"jsonrpc":"2.0", "method":"condenser_api.get_dynamic_global_properties", "params":[], "id":1}';
-    //const req = await makeRequest(url, 'd', 'POST', 0, null, data);
 
     window.addEventListener('load', () => {
 

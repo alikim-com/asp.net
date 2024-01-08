@@ -128,6 +128,10 @@ public class Admin_IndexModel(TicTacToe_Context _dbContext) : PageModel
 
     public async Task OnGetAsync()
     {
+        // don't run for /Admin
+        if (string.IsNullOrWhiteSpace(DbSetTEntityName)) 
+            return;
+        
         DeferredCtor();
 
         await (dynamic)OnGetAsyncGen!.Invoke(
@@ -137,6 +141,9 @@ public class Admin_IndexModel(TicTacToe_Context _dbContext) : PageModel
 
     public async Task<IActionResult> OnPostUpdateAsync()
     {
+        if (string.IsNullOrWhiteSpace(DbSetTEntityName)) 
+            return Page();
+        
         DeferredCtor();
 
         return await (dynamic)OnPostUpdateAsyncGen!.Invoke(
