@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using static asp_net_sql.Pages.Result;
 
 using System.Reflection;
+using Microsoft.Extensions.Primitives;
 
 namespace asp_net_sql.Pages;
 
@@ -218,6 +219,16 @@ public class Admin_IndexModel<T> : PageModel where T : class
             pInf.SetValue(item, props[pInf.Name]);
     }
 
+    Dictionary<string, object> FormToTypedProps(
+        Dictionary<string, StringValues> formData,
+        string prf) =>
+            formData == null ? [] :
+            DbSetPropInfo.Select(ent =>
+                new KeyValuePair<string, object>(
+                    ent.Name,
+                    Convert.ChangeType(formData[prf + ent.Name].ToString(), ent.PropertyType)
+                )).ToDictionary();
+
     /// <summary>
     /// Runs after Ctor
     /// </summary>
@@ -234,12 +245,13 @@ public class Admin_IndexModel<T> : PageModel where T : class
         {
             var formData = Request.Form.ToDictionary();
 
-            // RESTORE TOKENS TO TYPED
-
             AsyncDbSetItems = await DbSet.ToListAsync();
 
-            // object[] PKeyValues = DbSetPKeys.Select(pk => oldProps[pk]).ToArray();
-            object? item = null; // await DbSet.FindAsync(PKeyValues);
+            var newProps = FormToTypedProps(formData, "");
+            var oldProps = FormToTypedProps(formData, "old__");
+
+            object[] PKeyValues = DbSetPKeys.Select(pk => oldProps[pk]).ToArray();
+            T? item = await DbSet.FindAsync(PKeyValues);
 
             if (item != null)
             {
@@ -258,7 +270,7 @@ public class Admin_IndexModel<T> : PageModel where T : class
                     return PageWithResult(result, ResType.Error);
                 }
 
-                //UpdateDbSet(item, newProps);
+                UpdateDbSet(item, newProps);
 
                 ResType resType;
 
@@ -275,7 +287,7 @@ public class Admin_IndexModel<T> : PageModel where T : class
                 }
                 catch (Exception ex)
                 {
-                    //UpdateDbSet(item, oldProps);
+                    UpdateDbSet(item, oldProps);
 
                     resType = ResType.Error;
                     result.info.Add(
