@@ -1,0 +1,20 @@
+﻿@page
+
+@using asp_net_sql.Pages.CodeBehind
+
+@model API_Post_Model
+
+@{
+    ViewData["Title"] = "API Post Test";
+}
+
+<h1>API_Post</h1>
+
+<h2>json</h2>
+<div>_@ViewData["json"]_</div>
+
+<h2>responseBody</h2>
+<div>_@ViewData["responseBody"]_</div>
+
+<h2>StatusCode</h2>
+<div>_@ViewData["StatusCode"]_</div>

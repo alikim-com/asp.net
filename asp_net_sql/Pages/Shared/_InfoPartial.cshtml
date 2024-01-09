@@ -1,4 +1,6 @@
-﻿@{
+﻿@using asp_net_sql.Pages.CodeBehind
+
+@{
     var result = ViewData["Result"] as Result;
     if(result == null) return;
     var type = result.type;

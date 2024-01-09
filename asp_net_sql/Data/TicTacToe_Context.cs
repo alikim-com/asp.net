@@ -1,5 +1,6 @@
-﻿using asp_net_sql.Models;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+//
+using asp_net_sql.Models;
 
 namespace asp_net_sql.Data;
 

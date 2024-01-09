@@ -1,14 +1,17 @@
-﻿using asp_net_sql.Data;
+﻿using Microsoft.EntityFrameworkCore;
+//
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.EntityFrameworkCore;
-using static asp_net_sql.Pages.Result;
-
-using System.Reflection;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Primitives;
+//
+using asp_net_sql.Data;
+using static asp_net_sql.Pages.CodeBehind.Result;
+//
+using System.Reflection;
 
-namespace asp_net_sql.Pages;
+
+namespace asp_net_sql.Pages.CodeBehind;
 
 public static class EntityHelper
 {
@@ -83,7 +86,7 @@ public class CustomViewData()
     public List<dynamic>? AsyncDbSetItems = [];
 }
 
-public class Admin_IndexModel(TicTacToe_Context _dbContext) : PageModel
+public class Admin_Index_Model(TicTacToe_Context _dbContext) : PageModel
 {
     // primary ctor
 
@@ -95,7 +98,7 @@ public class Admin_IndexModel(TicTacToe_Context _dbContext) : PageModel
     [BindProperty(SupportsGet = true)]
     public string DbSetTEntityName { get; set; } = "";
 
-    object Admin_IndexModel_GenInstance = new() { };
+    object Admin_Index_Model_GenInstance = new() { };
     MethodInfo? OnGetAsyncGen;
     MethodInfo? OnPostUpdateAsyncGen;
 
@@ -105,49 +108,49 @@ public class Admin_IndexModel(TicTacToe_Context _dbContext) : PageModel
 
     void DeferredCtor()
     {
-        var Admin_IndexModel_GenType = EntityHelper.MakeGenericType(
-            typeof(Admin_IndexModel<>),
+        var Admin_Index_Model_GenType = EntityHelper.MakeGenericType(
+            typeof(Admin_Index_Model<>),
             "asp_net_sql.Models." + DbSetTEntityName) ?? throw new Exception
-            ($"Admin_IndexModel.Ctor : failed to make gen type Admin_IndexModel<{DbSetTEntityName}>");
+            ($"Admin_Index_Model.Ctor : failed to make gen type Admin_Index_Model<{DbSetTEntityName}>");
 
-        var Admin_IndexModel_Gen = Activator.CreateInstance(
-            Admin_IndexModel_GenType,
+        var Admin_Index_Model_Gen = Activator.CreateInstance(
+            Admin_Index_Model_GenType,
             new object[] { dbContext, ViewDataGen }) ?? throw new Exception
-            ($"Admin_IndexModel.Ctor : failed to make instance of Admin_IndexModel<{DbSetTEntityName}>");
+            ($"Admin_Index_Model.Ctor : failed to make instance of Admin_Index_Model<{DbSetTEntityName}>");
 
-        Admin_IndexModel_GenInstance = Admin_IndexModel_Gen;
+        Admin_Index_Model_GenInstance = Admin_Index_Model_Gen;
 
-        OnGetAsyncGen = Admin_IndexModel_GenType.GetMethod("OnGetAsync")
+        OnGetAsyncGen = Admin_Index_Model_GenType.GetMethod("OnGetAsync")
             ?? throw new Exception
-           ($"Admin_IndexModel.Ctor : OnGetAsync<{DbSetTEntityName}> is null");
+           ($"Admin_Index_Model.Ctor : OnGetAsync<{DbSetTEntityName}> is null");
 
-        OnPostUpdateAsyncGen = Admin_IndexModel_GenType.GetMethod("OnPostUpdateAsync")
+        OnPostUpdateAsyncGen = Admin_Index_Model_GenType.GetMethod("OnPostUpdateAsync")
             ?? throw new Exception
-           ($"Admin_IndexModel.Ctor : OnPostUpdateAsync<{DbSetTEntityName}> is null");
+           ($"Admin_Index_Model.Ctor : OnPostUpdateAsync<{DbSetTEntityName}> is null");
     }
 
     public async Task OnGetAsync()
     {
         // don't run for /Admin
-        if (string.IsNullOrWhiteSpace(DbSetTEntityName)) 
+        if (string.IsNullOrWhiteSpace(DbSetTEntityName))
             return;
-        
+
         DeferredCtor();
 
         await (dynamic)OnGetAsyncGen!.Invoke(
-            Admin_IndexModel_GenInstance,
+            Admin_Index_Model_GenInstance,
             [])!;
     }
 
     public async Task<IActionResult> OnPostUpdateAsync()
     {
-        if (string.IsNullOrWhiteSpace(DbSetTEntityName)) 
+        if (string.IsNullOrWhiteSpace(DbSetTEntityName))
             return Page();
-        
+
         DeferredCtor();
 
         return await (dynamic)OnPostUpdateAsyncGen!.Invoke(
-            Admin_IndexModel_GenInstance,
+            Admin_Index_Model_GenInstance,
             [
                 HttpContext.Request,
                 ModelState
@@ -155,7 +158,7 @@ public class Admin_IndexModel(TicTacToe_Context _dbContext) : PageModel
     }
 }
 
-public class Admin_IndexModel<T> : PageModel where T : class
+public class Admin_Index_Model<T> : PageModel where T : class
 {
     readonly TicTacToe_Context dbContext;
     readonly CustomViewData ViewDataParent = new();
@@ -166,7 +169,7 @@ public class Admin_IndexModel<T> : PageModel where T : class
 
     public List<T> AsyncDbSetItems;
 
-    public Admin_IndexModel(
+    public Admin_Index_Model(
         TicTacToe_Context _dbContext,
         CustomViewData _ViewDataParent)
     {
@@ -180,7 +183,7 @@ public class Admin_IndexModel<T> : PageModel where T : class
         var DbSetType = typeof(T);
         var entityType = dbContext.Model.FindEntityType(DbSetType);
         var pKey = (entityType?.FindPrimaryKey()) ??
-            throw new Exception($"Admin_IndexModel.Ctor : pkey not found for type '{DbSetType}'");
+            throw new Exception($"Admin_Index_Model.Ctor : pkey not found for type '{DbSetType}'");
 
         DbSetPKeys = pKey.Properties.Select(p => p.Name).ToList();
 
@@ -289,7 +292,7 @@ public class Admin_IndexModel<T> : PageModel where T : class
 
                     resType = ResType.OK;
                     result.info.Add(
-                        "Admin_IndexModel.SaveChangesAsync",
+                        "Admin_Index_Model.SaveChangesAsync",
                         [$"Success, {cnt} row affected"]);
                 }
                 catch (Exception ex)
@@ -298,7 +301,7 @@ public class Admin_IndexModel<T> : PageModel where T : class
 
                     resType = ResType.Error;
                     result.info.Add(
-                        "Admin_IndexModel.SaveChangesAsync",
+                        "Admin_Index_Model.SaveChangesAsync",
                         ["Exception: " + ex.Message]);
                 }
 
@@ -311,7 +314,7 @@ public class Admin_IndexModel<T> : PageModel where T : class
             await transaction.RollbackAsync();
 
             result.info.Add(
-                "Admin_IndexModel.OnPostUpdateAsync",
+                "Admin_Index_Model.OnPostUpdateAsync",
                 ["Transaction exception: " + ex.Message]);
             return PageWithResult(result, ResType.Error);
         }
