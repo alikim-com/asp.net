@@ -86,7 +86,7 @@ public class CustomViewData()
     public List<dynamic>? AsyncDbSetItems = [];
 }
 
-public class Admin_Index_Model(TicTacToe_Context _dbContext) : PageModel
+public class Admin_CB(TicTacToe_Context _dbContext) : PageModel
 {
     // primary ctor
 
@@ -98,7 +98,7 @@ public class Admin_Index_Model(TicTacToe_Context _dbContext) : PageModel
     [BindProperty(SupportsGet = true)]
     public string DbSetTEntityName { get; set; } = "";
 
-    object Admin_Index_Model_GenInstance = new() { };
+    object Admin_CB_GenInstance = new() { };
     MethodInfo? OnGetAsyncGen;
     MethodInfo? OnPostUpdateAsyncGen;
 
@@ -108,25 +108,25 @@ public class Admin_Index_Model(TicTacToe_Context _dbContext) : PageModel
 
     void DeferredCtor()
     {
-        var Admin_Index_Model_GenType = EntityHelper.MakeGenericType(
-            typeof(Admin_Index_Model<>),
+        var Admin_CB_GenType = EntityHelper.MakeGenericType(
+            typeof(Admin_CB<>),
             "asp_net_sql.Models." + DbSetTEntityName) ?? throw new Exception
-            ($"Admin_Index_Model.Ctor : failed to make gen type Admin_Index_Model<{DbSetTEntityName}>");
+            ($"Admin_CB.Ctor : failed to make gen type Admin_CB<{DbSetTEntityName}>");
 
-        var Admin_Index_Model_Gen = Activator.CreateInstance(
-            Admin_Index_Model_GenType,
+        var Admin_CB_Gen = Activator.CreateInstance(
+            Admin_CB_GenType,
             new object[] { dbContext, ViewDataGen }) ?? throw new Exception
-            ($"Admin_Index_Model.Ctor : failed to make instance of Admin_Index_Model<{DbSetTEntityName}>");
+            ($"Admin_CB.Ctor : failed to make instance of Admin_CB<{DbSetTEntityName}>");
 
-        Admin_Index_Model_GenInstance = Admin_Index_Model_Gen;
+        Admin_CB_GenInstance = Admin_CB_Gen;
 
-        OnGetAsyncGen = Admin_Index_Model_GenType.GetMethod("OnGetAsync")
+        OnGetAsyncGen = Admin_CB_GenType.GetMethod("OnGetAsync")
             ?? throw new Exception
-           ($"Admin_Index_Model.Ctor : OnGetAsync<{DbSetTEntityName}> is null");
+           ($"Admin_CB.Ctor : OnGetAsync<{DbSetTEntityName}> is null");
 
-        OnPostUpdateAsyncGen = Admin_Index_Model_GenType.GetMethod("OnPostUpdateAsync")
+        OnPostUpdateAsyncGen = Admin_CB_GenType.GetMethod("OnPostUpdateAsync")
             ?? throw new Exception
-           ($"Admin_Index_Model.Ctor : OnPostUpdateAsync<{DbSetTEntityName}> is null");
+           ($"Admin_CB.Ctor : OnPostUpdateAsync<{DbSetTEntityName}> is null");
     }
 
     public async Task OnGetAsync()
@@ -138,7 +138,7 @@ public class Admin_Index_Model(TicTacToe_Context _dbContext) : PageModel
         DeferredCtor();
 
         await (dynamic)OnGetAsyncGen!.Invoke(
-            Admin_Index_Model_GenInstance,
+            Admin_CB_GenInstance,
             [])!;
     }
 
@@ -150,7 +150,7 @@ public class Admin_Index_Model(TicTacToe_Context _dbContext) : PageModel
         DeferredCtor();
 
         return await (dynamic)OnPostUpdateAsyncGen!.Invoke(
-            Admin_Index_Model_GenInstance,
+            Admin_CB_GenInstance,
             [
                 HttpContext.Request,
                 ModelState
@@ -158,7 +158,7 @@ public class Admin_Index_Model(TicTacToe_Context _dbContext) : PageModel
     }
 }
 
-public class Admin_Index_Model<T> : PageModel where T : class
+public class Admin_CB<T> : PageModel where T : class
 {
     readonly TicTacToe_Context dbContext;
     readonly CustomViewData ViewDataParent = new();
@@ -169,7 +169,7 @@ public class Admin_Index_Model<T> : PageModel where T : class
 
     public List<T> AsyncDbSetItems;
 
-    public Admin_Index_Model(
+    public Admin_CB(
         TicTacToe_Context _dbContext,
         CustomViewData _ViewDataParent)
     {
@@ -183,7 +183,7 @@ public class Admin_Index_Model<T> : PageModel where T : class
         var DbSetType = typeof(T);
         var entityType = dbContext.Model.FindEntityType(DbSetType);
         var pKey = (entityType?.FindPrimaryKey()) ??
-            throw new Exception($"Admin_Index_Model.Ctor : pkey not found for type '{DbSetType}'");
+            throw new Exception($"Admin_CB.Ctor : pkey not found for type '{DbSetType}'");
 
         DbSetPKeys = pKey.Properties.Select(p => p.Name).ToList();
 
@@ -292,7 +292,7 @@ public class Admin_Index_Model<T> : PageModel where T : class
 
                     resType = ResType.OK;
                     result.info.Add(
-                        "Admin_Index_Model.SaveChangesAsync",
+                        "Admin_CB.SaveChangesAsync",
                         [$"Success, {cnt} row affected"]);
                 }
                 catch (Exception ex)
@@ -301,7 +301,7 @@ public class Admin_Index_Model<T> : PageModel where T : class
 
                     resType = ResType.Error;
                     result.info.Add(
-                        "Admin_Index_Model.SaveChangesAsync",
+                        "Admin_CB.SaveChangesAsync",
                         ["Exception: " + ex.Message]);
                 }
 
@@ -314,7 +314,7 @@ public class Admin_Index_Model<T> : PageModel where T : class
             await transaction.RollbackAsync();
 
             result.info.Add(
-                "Admin_Index_Model.OnPostUpdateAsync",
+                "Admin_CB.OnPostUpdateAsync",
                 ["Transaction exception: " + ex.Message]);
             return PageWithResult(result, ResType.Error);
         }

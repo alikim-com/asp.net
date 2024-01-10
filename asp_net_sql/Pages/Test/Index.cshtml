@@ -2,7 +2,7 @@
 
 @using asp_net_sql.Pages.CodeBehind
 
-@model API_Post_Model
+@model APIPostTest_CB
 
 @{
     ViewData["Title"] = "API Post Test";
@@ -10,11 +10,17 @@
 
 <h1>API_Post</h1>
 
-<h2>json</h2>
+<h2>Sent</h2>
 <div>_@ViewData["json"]_</div>
 
-<h2>responseBody</h2>
+<h2>Response</h2>
 <div>_@ViewData["responseBody"]_</div>
 
 <h2>StatusCode</h2>
-<div>_@ViewData["StatusCode"]_</div>
+@{
+    var code = (int)(ViewData["StatusCode"] ?? "-1");
+}
+<div>@ViewData["StatusCode"] (@code)</div>
+
+<h2>ReasonPhrase</h2>
+<div>@ViewData["ReasonPhrase"]</div>

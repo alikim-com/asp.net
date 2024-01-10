@@ -9,48 +9,62 @@ public class PostData(Dictionary<string, string> _dict)
     public Dictionary<string, string> Dict { get; set; } = _dict;
 }
 
-public class API_Post_Model : PageModel
+public class APIPostTest_CB : PageModel
 {
-    static string json = "";
-
-    static async Task<HttpResponseMessage> SendPostRequestAsync()
+    static void PreparePost(
+        HttpRequest req,
+        string url,
+        PostData data,
+        out string apiEndpoint,
+        out HttpClient client,
+        out HttpContent content,
+        out string json)
     {
-        string apiEndpoint = "https://httpbin.org/anything";
+        string selfURI = req.Scheme + "://" + req.Host.ToUriComponent();
 
-        using HttpClient client = new();
+        apiEndpoint = selfURI + url;
 
-        var postData = new PostData(new() {
-            { "key1", "value1" },
-            { "key2", "value2" } 
-        });
+        client = new();
 
-        json = JsonSerializer.Serialize(postData);
+        json = JsonSerializer.Serialize(data);
 
-        HttpContent content = new StringContent(
-            json, 
-            System.Text.Encoding.UTF8, 
+        content = new StringContent(
+            json,
+            System.Text.Encoding.UTF8,
             "application/json");
-
-       return await client.PostAsync(apiEndpoint, content);
-
     }
 
     public async Task OnGetAsync()
     {
-        HttpResponseMessage response = await SendPostRequestAsync();
+        PreparePost(
+            Request,
+            "/API/Index",
+            new PostData(new() {
+                { "key1", "value1" },
+                { "key2", "value2" }
+            }),
+            out string apiEndpoint,
+            out HttpClient client,
+            out HttpContent content,
+            out string json);
+
+        HttpResponseMessage response = await 
+            client.PostAsync(apiEndpoint, content);
 
         ViewData["json"] = json;
 
         if (response.IsSuccessStatusCode)
         {
-            string responseBody = await response.Content.ReadAsStringAsync();
+            string responseBody = await 
+                response.Content.ReadAsStringAsync();
 
             ViewData["responseBody"] = responseBody;
 
-        } else
-        {
-            ViewData["StatusCode"] = response.StatusCode;
         }
+        
+        ViewData["StatusCode"] = response.StatusCode;
+
+        ViewData["ReasonPhrase"] = response.ReasonPhrase;
     }
 
     public async Task<IActionResult> OnPostAsync()
