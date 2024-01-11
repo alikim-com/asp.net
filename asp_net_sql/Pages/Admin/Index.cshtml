@@ -2,7 +2,9 @@
 
 @using System.Reflection;
 
+@using asp_net_sql.Common
 @using asp_net_sql.Pages.CodeBehind
+
 @model Admin_CB
 
 @{
@@ -12,11 +14,11 @@
     if (DbSetNames == null)
     {
         ViewData["Result"] = new Result(
-            Result.ResType.Error,
-            new Dictionary<string, string[]> {
+            ResType.Error,
+            new Dictionary<string, List<string>> {
                 {
                     "Razor.Admin_IndexModel",
-                    new string[] { "ViewData missing" }
+                    ["ViewData missing"]
                 }
             });
         return;

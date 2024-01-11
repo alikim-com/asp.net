@@ -1,11 +1,12 @@
-﻿@using asp_net_sql.Pages.CodeBehind
+﻿@using asp_net_sql.Common
+@using asp_net_sql.Pages.CodeBehind
 
 @{
     var result = ViewData["Result"] as Result;
     if(result == null) return;
     var type = result.type;
     var info = result.info;
-    if (type == Result.ResType.None) return;
+    if (type == ResType.None) return;
     var id = type.ToString().ToLower() + "Partial";
 }
 

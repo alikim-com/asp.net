@@ -6,78 +6,11 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Primitives;
 //
 using asp_net_sql.Data;
-using static asp_net_sql.Pages.CodeBehind.Result;
+using asp_net_sql.Common;
 //
 using System.Reflection;
 
-
 namespace asp_net_sql.Pages.CodeBehind;
-
-public static class EntityHelper
-{
-    public static Type MakeGenericType(Type genericType, string typeArgument)
-    {
-        Type? argument = Type.GetType(typeArgument) ?? throw new Exception
-            ($"EntityHelper.MakeGenericType : argument type '{typeArgument}' not found");
-
-        return genericType.MakeGenericType(argument);
-    }
-
-    public static MethodInfo MakeGenericMethod(Type T, string methodName, Type tArgument)
-    {
-        MethodInfo genericMethod = T.GetMethod(methodName) ?? throw new Exception
-            ($"EntityHelper.MakeGenericMethod : no method {methodName} found for type {T.Name}");
-
-        return genericMethod.MakeGenericMethod(tArgument);
-    }
-
-    public static Dictionary<string, Type> GetDbSetInfo(TicTacToe_Context dbContext) =>
-    dbContext.GetType().GetProperties().Where(p =>
-        p.PropertyType.IsGenericType &&
-        p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>))
-        .Select(p => new KeyValuePair<string, Type>(
-            p.PropertyType.GetGenericArguments()[0].Name,
-            p.PropertyType.GetGenericArguments()[0]
-            )).ToDictionary();
-
-    public static DbSet<T> GetDbSet<T>(TicTacToe_Context dbContext) where T : class
-    {
-        var typePInf = dbContext.GetType().GetProperties()
-        .FirstOrDefault(p => p.PropertyType == typeof(DbSet<T>));
-
-        var dbSetGen = typePInf?.GetValue(dbContext);
-
-        if (dbSetGen is not DbSet<T> dbSet)
-            throw new Exception($"EntityHelper.GetDbSet : error getting DbSet<{nameof(T)}> from dbContext");
-
-        return dbSet;
-    }
-
-    public static List<PropertyInfo> GetClassPropInfo<T>() where T : class
-    {
-        var infoDict = typeof(T).GetProperties()
-            .Where(property => IsSimpleType(property.PropertyType)).ToList();
-
-        return infoDict;
-    }
-
-    private static bool IsSimpleType(Type type) =>
-        type.IsPrimitive || type.IsValueType || type == typeof(string);
-}
-
-public class Result(
-    ResType _type = ResType.None,
-    Dictionary<string, string[]>? _info = null)
-{
-    public enum ResType
-    {
-        None,
-        OK,
-        Error
-    }
-    public ResType type = _type;
-    public Dictionary<string, string[]> info = _info ?? [];
-}
 
 public class CustomViewData()
 {
@@ -273,7 +206,7 @@ public class Admin_CB<T> : PageModel where T : class
                         if (value != null &&
                             value.ValidationState == ModelValidationState.Invalid)
                         {
-                            var errors = value.Errors.Select(ent => ent.ErrorMessage).ToArray();
+                            var errors = value.Errors.Select(ent => ent.ErrorMessage).ToList();
                             result.info.Add("<Invalid model> " + key, errors);
                         }
                     }
