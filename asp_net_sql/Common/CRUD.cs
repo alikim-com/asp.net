@@ -1,8 +1,7 @@
 ﻿using asp_net_sql.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
-
+//
 namespace asp_net_sql.Common;
 
 public enum CrudType
@@ -22,13 +21,29 @@ public enum CrudAction
 public class CRUD<T>(
     TicTacToe_Context _dbContext,
     DbSet<T> _DbSet,
-    List<string> _DbSetPKeys) where T : class
+    List<string> _DbSetPKeys) where T : class, new()
 {
     readonly TicTacToe_Context dbContext = _dbContext;
     readonly DbSet<T> DbSet = _DbSet;
     readonly List<string> DbSetPKeys = _DbSetPKeys;
 
     readonly List<PropertyInfo> DbSetPropInfo = EntityHelper.GetClassPropInfo<T>();
+
+    async Task AddDbSet(Dictionary<string, object>? props)
+    {
+        T item = new();
+
+        if(props != null)
+        foreach (var pInf in DbSetPropInfo)
+            pInf.SetValue(item, props[pInf.Name]);
+
+        await DbSet.AddAsync(item);
+    }
+
+    void DeleteDbSet(T item)
+    {
+        DbSet.Remove(item);
+    }
 
     void UpdateDbSet(T item, Dictionary<string, object> props)
     {
@@ -38,7 +53,7 @@ public class CRUD<T>(
 
     public async Task<Result> Do(
         CrudType ct, 
-        CrudAction action,
+        CrudAction ca,
         Dictionary<string, object> oldProps,
         Dictionary<string, object> newProps)
     {
@@ -53,7 +68,7 @@ public class CRUD<T>(
                 throw new Exception($"Unknown CrudType '{ct}'");
         }
 
-        if(action == CrudAction.Create)
+        if(ca == CrudAction.Create)
         {
             return new Result();
         }
@@ -70,10 +85,18 @@ public class CRUD<T>(
             throw new Exception($"CRUD.Do : item not found on {outp}");
         }
 
-        // CrudAction.Delete -> DeleteDbSet()
-        // CrudAction.Update
-
-        UpdateDbSet(item, newProps);
+        switch (ca)
+        {
+            case CrudAction.Create:
+                await AddDbSet(newProps);
+                break;
+            case CrudAction.Update:
+                UpdateDbSet(item, newProps);
+                break;
+            case CrudAction.Delete:
+                DeleteDbSet(item);
+                break;
+        }
 
         using var transaction = await dbContext.Database
             .BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead);
