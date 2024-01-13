@@ -51,6 +51,15 @@ public class CRUD<T>(
             pInf.SetValue(item, props[pInf.Name]);
     }
 
+    async Task<T> GetEntityByPkey(Dictionary<string, object> props)
+    {
+        object[] PKeyValues = DbSetPKeys.Select(pk => props[pk]).ToArray();
+        T? item = await DbSet.FindAsync(PKeyValues) ?? throw new Exception
+                ($"CRUD.GetEntityByPkey : not found by '{Utl.DictToString(props, ", ")}'");
+
+        return item;
+    }
+
     public async Task<Result> Do(
         CrudType ct, 
         CrudAction ca,
@@ -68,22 +77,7 @@ public class CRUD<T>(
                 throw new Exception($"Unknown CrudType '{ct}'");
         }
 
-        if(ca == CrudAction.Create)
-        {
-            return new Result();
-        }
-
-        object[] PKeyValues = DbSetPKeys.Select(pk => oldProps[pk]).ToArray();
-
-        T? item = await DbSet.FindAsync(PKeyValues);
-
-        if (item == null)
-        {
-            string outp = "";
-            foreach (var val in PKeyValues) 
-                outp += val.ToString() + ' ';
-            throw new Exception($"CRUD.Do : item not found on {outp}");
-        }
+        T? item = null;
 
         switch (ca)
         {
@@ -91,9 +85,11 @@ public class CRUD<T>(
                 await AddDbSet(newProps);
                 break;
             case CrudAction.Update:
+                item = await GetEntityByPkey(oldProps);
                 UpdateDbSet(item, newProps);
                 break;
             case CrudAction.Delete:
+                item = await GetEntityByPkey(oldProps);
                 DeleteDbSet(item);
                 break;
         }
@@ -122,7 +118,8 @@ public class CRUD<T>(
         {
             await transaction.RollbackAsync();
 
-            UpdateDbSet(item, oldProps);
+            if(ca == CrudAction.Update && item != null) 
+                UpdateDbSet(item, oldProps);
 
             result.type = ResType.Error;
             result.info[infKey].Add("Exception: " + ex.Message);

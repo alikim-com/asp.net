@@ -20,7 +20,7 @@
                     "Razor.Admin_IndexModel",
                     ["ViewData missing"]
                 }
-            });
+                    });
         return;
     }
 
@@ -67,7 +67,8 @@
                 foreach (var item in (dynamic)items)
                 {
                     row++;
-                    var btnId = $"btn__{row}";
+                    var btnIdOneUpdate = $"btn__one__update__{row}";
+                    var btnIdOneDelete = $"btn__one__delete__{row}";
                     <tr>
                         @foreach (var pInf in DbSetPropInfo)
                         {
@@ -77,10 +78,15 @@
                             </td>
                         }
                         <td>
-                            <button id="@btnId"
+                            <button id="@btnIdOneUpdate"
                                     type="submit"
-                                    asp-page-handler="Update">
-                                Change (Post)
+                                    asp-page-handler="CRUD">
+                                Change
+                            </button>
+                            <button id="@btnIdOneDelete"
+                                    type="submit"
+                                    asp-page-handler="CRUD">
+                                Delete
                             </button>
                         </td>
                     </tr>
@@ -111,10 +117,10 @@
         * Create a new form on the fly to POST only one row of data
         * clone verification token from the original form, if available
         */
-        const createPartialForm = (pref, row) => {
+        const createPartialForm = (crudtype, crudaction, row) => {
             const fullForm = get('fullForm');
             const partForm = fullForm.cloneNode();
-            const pfId = `partForm__${pref}__${row}`;
+            const pfId = `partForm__${row}`;
             partForm.id = pfId;
 
             const inputRow = document.querySelectorAll(`input[id$="__${row}"]`);
@@ -128,6 +134,11 @@
                 partForm.appendChild(inpOldVal);
             });
 
+            const inpCT = createInputElem('crudtype', crudtype);
+            const inpCA = createInputElem('crudaction', crudaction);
+            partForm.appendChild(inpCT);
+            partForm.appendChild(inpCA);
+
             document.body.appendChild(partForm);
 
             return pfId;
@@ -135,16 +146,24 @@
 
         for (let row = 0; row < @row; row++) {
 
-            const btn = get(`btn__${row}`);
+            const btnOneUpdate = get(`btn__one__update__${row}`);
+            const btnOneDelete = get(`btn__one__delete__${row}`);
 
-            btn.addEventListener('click', evt => {
-                evt.preventDefault();
-                const pfId = createPartialForm('update', row);
-                const partForm = get(pfId);
-                partForm.setAttribute('action', btn.getAttribute('formaction'));
-                const tokenElem = document.querySelector('input[name="__RequestVerificationToken"]');
-                if (tokenElem) partForm.appendChild(tokenElem.cloneNode());
-                partForm.submit();
+            [btnOneUpdate, btnOneDelete].forEach(btn => {
+
+                const btnId = btn.id.split('__');
+                const crudtype = btnId[1];
+                const crudaction = btnId[2];
+
+                btn.addEventListener('click', evt => {
+                    evt.preventDefault();
+                    const pfId = createPartialForm(crudtype, crudaction, row);
+                    const partForm = get(pfId);
+                    partForm.setAttribute('action', btn.getAttribute('formaction'));
+                    const tokenElem = document.querySelector('input[name="__RequestVerificationToken"]');
+                    if (tokenElem) partForm.appendChild(tokenElem.cloneNode());
+                    partForm.submit();
+                })
             });
         }
     });

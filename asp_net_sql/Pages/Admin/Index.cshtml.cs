@@ -33,9 +33,9 @@ public class Admin_CB(TicTacToe_Context _dbContext) : PageModel
 
     object Admin_CB_GenInstance = new() { };
     MethodInfo? OnGetAsyncGen;
-    MethodInfo? OnPostUpdateAsyncGen;
+    MethodInfo? OnPostCRUDAsyncGen;
 
-    // data from gen class
+    // feedback data from gen class for RazorPage
 
     public readonly CustomViewData ViewDataGen = new();
 
@@ -57,9 +57,9 @@ public class Admin_CB(TicTacToe_Context _dbContext) : PageModel
             ?? throw new Exception
            ($"Admin_CB.Ctor : OnGetAsync<{DbSetTEntityName}> is null");
 
-        OnPostUpdateAsyncGen = Admin_CB_GenType.GetMethod("OnPostUpdateAsync")
+        OnPostCRUDAsyncGen = Admin_CB_GenType.GetMethod("OnPostCRUDAsync")
             ?? throw new Exception
-           ($"Admin_CB.Ctor : OnPostUpdateAsync<{DbSetTEntityName}> is null");
+           ($"Admin_CB.Ctor : OnPostCRUDAsync<{DbSetTEntityName}> is null");
     }
 
     public async Task OnGetAsync()
@@ -75,14 +75,14 @@ public class Admin_CB(TicTacToe_Context _dbContext) : PageModel
             [])!;
     }
 
-    public async Task<IActionResult> OnPostUpdateAsync()
+    public async Task<IActionResult> OnPostCRUDAsync()
     {
         if (string.IsNullOrWhiteSpace(DbSetTEntityName))
             return Page();
 
         DeferredCtor();
 
-        return await (dynamic)OnPostUpdateAsyncGen!.Invoke(
+        return await (dynamic)OnPostCRUDAsyncGen!.Invoke(
             Admin_CB_GenInstance,
             [
                 HttpContext.Request,
@@ -91,13 +91,25 @@ public class Admin_CB(TicTacToe_Context _dbContext) : PageModel
     }
 }
 
-public class Admin_CB<T> : PageModel where T : class
+public class Admin_CB<T> : PageModel where T : class, new()
 {
     readonly TicTacToe_Context dbContext;
+    /// <summary>
+    /// Feedback for RazorPage
+    /// </summary>
     readonly CustomViewData ViewDataParent = new();
 
+    /// <summary>
+    /// DB Table
+    /// </summary>
     readonly DbSet<T> DbSet;
+    /// <summary>
+    /// DB Table columns, i.e. DbSet<T> class props w/o nav ones
+    /// </summary>
     readonly List<PropertyInfo> DbSetPropInfo;
+    /// <summary>
+    /// Table primary keys
+    /// </summary>
     readonly List<string> DbSetPKeys;
 
     public List<T> AsyncDbSetItems;
@@ -125,8 +137,7 @@ public class Admin_CB<T> : PageModel where T : class
 
     void SetParentView(
         Result? resultGen,
-        List<PropertyInfo> DbSetPropInfo,
-        List<T> AsyncDbSetItems)
+        List<PropertyInfo> DbSetPropInfo)
     {
         ViewDataParent.result = resultGen;
         ViewDataParent.DbSetPropInfo = DbSetPropInfo;
@@ -139,19 +150,18 @@ public class Admin_CB<T> : PageModel where T : class
     /// </summary>
     public async Task OnGetAsync()
     {
+        // [] after ctor
         AsyncDbSetItems = await DbSet.ToListAsync();
 
-        SetParentView(null, DbSetPropInfo, AsyncDbSetItems);
+        SetParentView(null, DbSetPropInfo);
     }
 
     /// <summary>
     /// Runs after OnPost, followed by RazorPage
     /// </summary>
-    PageResult PageWithResult(Result result, ResType type)
+    PageResult PageWithResult(Result result)
     {
-        result.type = type;
-
-        SetParentView(result, DbSetPropInfo, AsyncDbSetItems);
+        SetParentView(result, DbSetPropInfo);
 
         return Page();
     }
@@ -175,83 +185,66 @@ public class Admin_CB<T> : PageModel where T : class
     /// <summary>
     /// Runs after Ctor
     /// </summary>
-    public async Task<IActionResult> OnPostUpdateAsync(
+    public async Task<IActionResult> OnPostCRUDAsync(
         HttpRequest Request,
         ModelStateDictionary ModelState
         )
     {
+        // [] after ctor
+        AsyncDbSetItems = await DbSet.ToListAsync();
+
         var result = new Result();
 
-        using var transaction = await dbContext.Database
-            .BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead);
-        try
+        if (!ModelState.IsValid)
         {
-            var formData = Request.Form.ToDictionary();
-
-            AsyncDbSetItems = await DbSet.ToListAsync();
-
-            var newProps = FormToTypedProps(formData, "");
-            var oldProps = FormToTypedProps(formData, "old__");
-
-            object[] PKeyValues = DbSetPKeys.Select(pk => oldProps[pk]).ToArray();
-            T? item = await DbSet.FindAsync(PKeyValues);
-
-            if (item != null)
+            result.type = ResType.Error;
+            foreach (var key in ModelState.Keys)
             {
-                if (!ModelState.IsValid)
+                var value = ModelState[key];
+                if (value != null &&
+                    value.ValidationState == ModelValidationState.Invalid)
                 {
-                    foreach (var key in ModelState.Keys)
-                    {
-                        var value = ModelState[key];
-                        if (value != null &&
-                            value.ValidationState == ModelValidationState.Invalid)
-                        {
-                            var errors = value.Errors.Select(ent => ent.ErrorMessage).ToList();
-                            result.info.Add("<Invalid model> " + key, errors);
-                        }
-                    }
-                    return PageWithResult(result, ResType.Error);
+                    var errors = value.Errors.Select(ent => ent.ErrorMessage).ToList();
+                    result.info.Add
+                        ($"Admin_CB.OnPostAsync : Invalid model [{key}]", errors);
                 }
-
-                UpdateDbSet(item, newProps);
-
-                ResType resType;
-
-                try
-                {
-                    int cnt = await dbContext.SaveChangesAsync();
-
-                    await transaction.CommitAsync();
-
-                    resType = ResType.OK;
-                    result.info.Add(
-                        "Admin_CB.SaveChangesAsync",
-                        [$"Success, {cnt} row affected"]);
-                }
-                catch (Exception ex)
-                {
-                    UpdateDbSet(item, oldProps);
-
-                    resType = ResType.Error;
-                    result.info.Add(
-                        "Admin_CB.SaveChangesAsync",
-                        ["Exception: " + ex.Message]);
-                }
-
-                return PageWithResult(result, resType);
             }
-
+            return PageWithResult(result);
         }
-        catch (Exception ex)
+
+        var formData = Request.Form.ToDictionary();
+
+        if (!Enum.TryParse(
+            formData["crudtype"].ToString().Capitalise(),
+            out CrudType ct)
+            ) throw new Exception($"Admin_CB.OnPostAsync : form[crudtype] parse error");
+
+        if (!Enum.TryParse(
+            formData["crudaction"].ToString().Capitalise(),
+            out CrudAction ca)
+            ) throw new Exception($"Admin_CB.OnPostAsync : form[crudaction] parse error");
+
+        var crud = new CRUD<T>(dbContext, DbSet, DbSetPKeys);
+
+        var oldProps = FormToTypedProps(formData, "old__");
+        var newProps = FormToTypedProps(formData, "");
+
+        switch (ca)
         {
-            await transaction.RollbackAsync();
+            case CrudAction.Delete:
+                result = await crud.Do(ct, ca, oldProps, []);
+                return PageWithResult(result);
 
-            result.info.Add(
-                "Admin_CB.OnPostUpdateAsync",
-                ["Transaction exception: " + ex.Message]);
-            return PageWithResult(result, ResType.Error);
+            case CrudAction.Create:
+                result = await crud.Do(ct, ca, [], newProps);
+                return PageWithResult(result);
+
+            case CrudAction.Update:
+                result = await crud.Do(ct, ca, oldProps, newProps);
+                return PageWithResult(result);
+
+            default:
+                return RedirectToPage();
         }
-
-        return RedirectToPage();
     }
 }

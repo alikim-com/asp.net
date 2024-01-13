@@ -5,6 +5,23 @@ using asp_net_sql.Data;
 //
 namespace asp_net_sql.Common;
 
+public static class StringExtensions
+{
+    public static string Capitalise(this string input) => string.IsNullOrEmpty(input) ?
+        input : char.ToUpper(input[0]) + input[1..];
+}
+
+    public class Utl
+{
+    public static string DictToString<TKey, TValue>(
+        Dictionary<TKey, TValue> dict,
+        string? sep = null) where TKey : notnull =>
+        string.Join(
+            sep ?? Environment.NewLine,
+            dict.Select(kvp => $"Key: {kvp.Key}, Value: {kvp.Value}")
+        );
+}
+
 public enum ResType
 {
     None,

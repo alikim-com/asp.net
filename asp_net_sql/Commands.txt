@@ -22,3 +22,7 @@ creates Migration folder with files out of Models classes and database context o
 applies migration files
 
 > dotnet ef database update
+
+add check constraints manually to the Fluent API
+
+entity.ToTable(b => b.HasCheckConstraint("CK_EGR_Origin", "Origin IN ('None', 'Human', 'AI')"));
