@@ -44,7 +44,7 @@
     // the end of page for /Admin/
     if (selfName == "" || DbSetPropInfo == null) return;
 
-    var row = -1;
+    var row = 0; // global for use in JS
     var allProps = string.Join(",", DbSetPropInfo.Select(pInf => pInf.Name));
 }
 
@@ -66,7 +66,6 @@
                 var items = Model.ViewDataGen.AsyncDbSetItems ?? [];
                 foreach (var item in (dynamic)items)
                 {
-                    row++;
                     var btnIdOneUpdate = $"btn__one__update__{row}";
                     var btnIdOneDelete = $"btn__one__delete__{row}";
                     <tr>
@@ -90,10 +89,33 @@
                             </button>
                         </td>
                     </tr>
+                    row++;
                 }
             }
         </tbody>
     </table>
+</form>
+
+<form id="createForm" method="post">
+<input type="hidden" name="crudtype" value="one" />
+<input type="hidden" name="crudaction" value="create" />
+<table class="table">
+    <tr>
+        @foreach (var pInf in DbSetPropInfo)
+        {
+            <td>
+                <input name="@pInf.Name" type="text" value="" />
+            </td>
+        }
+        <td>
+            <button id="btn__one__create"
+                type="submit"
+                asp-page-handler="CRUD">
+            Add
+            </button>
+        </td>
+    </tr>
+</table>
 </form>
 
 <script type="module">

@@ -150,7 +150,6 @@ public class Admin_CB<T> : PageModel where T : class, new()
     /// </summary>
     public async Task OnGetAsync()
     {
-        // [] after ctor
         AsyncDbSetItems = await DbSet.ToListAsync();
 
         SetParentView(null, DbSetPropInfo);
@@ -159,8 +158,11 @@ public class Admin_CB<T> : PageModel where T : class, new()
     /// <summary>
     /// Runs after OnPost, followed by RazorPage
     /// </summary>
-    PageResult PageWithResult(Result result)
+    async Task<PageResult> PageWithResult(Result result)
     {
+        // update after CRUD and before RazorPage
+        AsyncDbSetItems = await DbSet.ToListAsync();
+
         SetParentView(result, DbSetPropInfo);
 
         return Page();
@@ -190,9 +192,6 @@ public class Admin_CB<T> : PageModel where T : class, new()
         ModelStateDictionary ModelState
         )
     {
-        // [] after ctor
-        AsyncDbSetItems = await DbSet.ToListAsync();
-
         var result = new Result();
 
         if (!ModelState.IsValid)
@@ -209,7 +208,7 @@ public class Admin_CB<T> : PageModel where T : class, new()
                         ($"Admin_CB.OnPostAsync : Invalid model [{key}]", errors);
                 }
             }
-            return PageWithResult(result);
+            return await PageWithResult(result);
         }
 
         var formData = Request.Form.ToDictionary();
@@ -226,22 +225,23 @@ public class Admin_CB<T> : PageModel where T : class, new()
 
         var crud = new CRUD<T>(dbContext, DbSet, DbSetPKeys);
 
-        var oldProps = FormToTypedProps(formData, "old__");
-        var newProps = FormToTypedProps(formData, "");
-
         switch (ca)
         {
             case CrudAction.Delete:
-                result = await crud.Do(ct, ca, oldProps, []);
-                return PageWithResult(result);
+                var oldPropsD = FormToTypedProps(formData, "old__");
+                result = await crud.Do(ct, ca, oldPropsD, []);
+                return await PageWithResult(result);
 
             case CrudAction.Create:
-                result = await crud.Do(ct, ca, [], newProps);
-                return PageWithResult(result);
+                var newPropsC = FormToTypedProps(formData, "");
+                result = await crud.Do(ct, ca, [], newPropsC);
+                return await PageWithResult(result);
 
             case CrudAction.Update:
-                result = await crud.Do(ct, ca, oldProps, newProps);
-                return PageWithResult(result);
+                var oldPropsU = FormToTypedProps(formData, "old__");
+                var newPropsU = FormToTypedProps(formData, "");
+                result = await crud.Do(ct, ca, oldPropsU, newPropsU);
+                return await PageWithResult(result);
 
             default:
                 return RedirectToPage();

@@ -36,6 +36,14 @@ public class Result(
 
     public ResType type = _type;
     public Dictionary<string, List<string>> info = _info ?? [];
+
+    public void AddExeptionInfo(string key, Exception ex)
+    {
+        type = ResType.Error;
+        info[key].Add("Exception: " + ex.Message);
+        if(ex.InnerException != null)
+            info[key].Add("Inner exception: " + ex.InnerException.Message);
+    }
 }
 
 public static class EntityHelper

@@ -121,8 +121,7 @@ public class CRUD<T>(
             if(ca == CrudAction.Update && item != null) 
                 UpdateDbSet(item, oldProps);
 
-            result.type = ResType.Error;
-            result.info[infKey].Add("Exception: " + ex.Message);
+            result.AddExeptionInfo(infKey, ex);
         }
 
         return result;
