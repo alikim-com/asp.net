@@ -156,19 +156,22 @@ public class EM
 public class GNode<TEvtArg>(
     EventHandler<TEvtArg> _handler,
     TEvtArg _arg,
-    bool _async,
-    bool _await,
+    bool _asyncFlag,
+    bool _awaitFlag,
     List<GNode<TEvtArg>> _children)
 {
     public EventHandler<TEvtArg> handler = _handler;
     public TEvtArg arg = _arg;
-    public bool async = _async;
-    public bool await = _await;
+    public bool asyncFlag = _asyncFlag;
+    public bool awaitFlag = _awaitFlag;
 
-    public void Raise()
+    public async Task RaiseAsync()
     {
         var evtG = handler;
-        evtG.Invoke(this, arg);
+        if(awaitFlag)
+            await Task.Run(() => evtG.Invoke(this, arg));
+        else
+            evtG.Invoke(this, arg);
     }
 
     public readonly List<GNode<TEvtArg>> children = _children;
@@ -186,29 +189,18 @@ public class EventLoop<TEvtArg>(BlockingCollection<GNode<TEvtArg>> _dataQueue)
 
     public void Run()
     {
-        Engine.Log("Consumer start");
+        Utils.Log("Consumer start");
 
         foreach (GNode<TEvtArg> item in dataQueue.GetConsumingEnumerable())
         {
-            Engine.Log($"Consumed: {item}");
+            Utils.Log($"Consumed: {item}");
 
-            item.Raise();
+            //await item.RaiseAsync();
             
         }
 
-        Engine.Log("Consumer end");
+        Utils.Log("Consumer end");
     }
 }
 
-public class EventTest
-{
-    public void InitEvents()
-    {
-        Engine.Log("InitEvents");
-    }
 
-    public void Start()
-    {
-        Engine.Log("Start");
-    }
-}

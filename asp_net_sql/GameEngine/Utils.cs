@@ -1,4 +1,5 @@
 ﻿
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -189,6 +190,14 @@ public class Utils
     public interface INamedProfile
     {
         string Name { get; set; }
+    }
+
+    static Stopwatch? stopwatch;
+    static public void Log(string msg)
+    {
+        stopwatch ??= Stopwatch.StartNew();
+        double elapsedSec = stopwatch.Elapsed.TotalSeconds;
+        Debug.WriteLine(elapsedSec.ToString("0.000") + " " + msg);
     }
 }
 

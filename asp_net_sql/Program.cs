@@ -41,10 +41,6 @@ public class Program
         //var game = new Engine();
         //game.Start();
 
-        var game = new EventTest();
-        game.InitEvents();
-        game.Start();
-
         app.Run();
     }
 }
