@@ -99,7 +99,7 @@ internal class CellWrapper : CellBg, IComponent
     }
 
     /// <summary>
-    /// Subscribed EM.EvtSyncBoardUI event
+    /// Subscribed EvtSyncBoardUI event
     /// </summary>
     internal EventHandler<Dictionary<Point, BgMode>> SyncBoardUIHandler;
 
@@ -163,13 +163,13 @@ internal class CellWrapper : CellBg, IComponent
     }
 
     /// <summary>
-    /// Raises EM.EvtPlayerMoved event
+    /// Raises EvtPlayerMoved event
     /// </summary>
     void OnClick(object? _, EventArgs __)
     {
         if (IsLocked) return;
 
-        EM.Raise(EM.Evt.PlayerMoved, this, rc);
+        EM.Raise(Evt.PlayerMoved, this, rc);
     }
 
     /// <summary>

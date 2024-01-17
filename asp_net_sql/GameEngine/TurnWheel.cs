@@ -77,14 +77,14 @@ internal class TurnWheel
         {
             DisableUICb();
 
-            EM.Raise(EM.Evt.AIMakeMove, new { }, CurPlayer);
+            EM.Raise(Evt.AIMakeMove, new { }, CurPlayer);
 
         } else if (CurPlayerIsHuman)
         {
             EnableUICb();
         }
 
-        EM.Raise(EM.Evt.SyncMoveLabels, new { }, CurPlayer);
+        EM.Raise(Evt.SyncMoveLabels, new { }, CurPlayer);
     }
 
     static internal void GameCountdown()
@@ -100,7 +100,7 @@ internal class TurnWheel
         foreach (LabelManager.Countdown e in Enum.GetValues(typeof(LabelManager.Countdown)))
         {
             // raise from UI thread for safe UI access
-            EM.InvokeFromMainThread(() => EM.Raise(EM.Evt.UpdateLabels, new { }, new Enum[] { e }));
+            EM.InvokeFromMainThread(() => EM.Raise(Evt.UpdateLabels, new { }, new Enum[] { e }));
             Thread.Sleep(1000);
         }
 

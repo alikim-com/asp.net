@@ -77,7 +77,7 @@ class LabelManager : INotifyPropertyChanged
     };
 
     /// <summary>
-    /// Subscribed to EM.EvtUpdateLabels event
+    /// Subscribed to EvtUpdateLabels event
     /// </summary>
     /// <param name="e">An array of states to set for each panel</param>
     static internal readonly EventHandler<Enum[]> UpdateLabelsHandler = (object? _, Enum[] e) =>

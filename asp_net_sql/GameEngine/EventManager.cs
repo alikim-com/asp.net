@@ -5,6 +5,24 @@ using System.Drawing;
 namespace asp_net_sql.GameEngine;
 
 /// <summary>
+/// Event associations
+/// </summary>
+public enum Evt
+{
+    GStateChanged,
+    SyncBoard,
+    SyncBoardWin,
+    SyncBoardUI,
+    AIMakeMove,
+    SyncMoveLabels,
+    PlayerMoved,
+    AIMoved,
+    GameOver,
+    GameTie,
+    UpdateLabels
+}
+
+/// <summary>
 /// Manages events
 /// </summary>
 public class EM
@@ -62,23 +80,6 @@ public class EM
     /// </summary>
     static event EventHandler<Enum[]> EvtUpdateLabels = delegate { };
 
-    /// <summary>
-    /// Event associations
-    /// </summary>
-    public enum Evt
-    {
-        GStateChanged,
-        SyncBoard,
-        SyncBoardWin,
-        SyncBoardUI,
-        AIMakeMove,
-        SyncMoveLabels,
-        PlayerMoved,
-        AIMoved,
-        GameOver,
-        GameTie,
-        UpdateLabels
-    }
     /// <summary>
     /// To raise or sub/unsub to events by their enum names
     /// </summary>
@@ -153,49 +154,78 @@ public class EM
 
 // EVENT GRAPH
 
-public class GNode<TEvtArg>(
-    EventHandler<TEvtArg> _handler,
-    TEvtArg _arg,
-    bool _asyncFlag,
-    bool _awaitFlag,
-    List<GNode<TEvtArg>> _children)
+public class GNode<TEvtArg>
 {
-    public EventHandler<TEvtArg> handler = _handler;
-    public TEvtArg arg = _arg;
-    public bool asyncFlag = _asyncFlag;
-    public bool awaitFlag = _awaitFlag;
+    public Evt evtName;
+    public EventHandler<TEvtArg> handler;
+    public TEvtArg arg;
+    public bool awaitFlag;
+
+    public readonly List<GNode<object>> children = [];
+
+    public GNode(
+        Evt _evtName,
+        EventHandler<TEvtArg> _handler,
+        TEvtArg _arg,
+        bool _awaitFlag,
+        List<GNode<object>> _children)
+    {
+        evtName = _evtName;
+        handler = _handler;
+        arg = _arg;
+        awaitFlag = _awaitFlag;
+        children.AddRange(_children);
+    }
+
+    public void AddChild(GNode<object> node) => children.Add(node);
+    public bool RemChild(GNode<object> node) => children.Remove(node);
 
     public async Task RaiseAsync()
     {
         var evtG = handler;
-        if(awaitFlag)
+        if (awaitFlag)
             await Task.Run(() => evtG.Invoke(this, arg));
         else
             evtG.Invoke(this, arg);
     }
-
-    public readonly List<GNode<TEvtArg>> children = _children;
-    public void AddChild(GNode<TEvtArg> node) => children.Add(node);
-    public bool RemChild(GNode<TEvtArg> node) => children.Remove(node);
 }
 
-public class DirGraphGNode<TEvtArg>(List<GNode<TEvtArg>> _nodes)
+public class DirGraphGNode(List<GNode<object>> _nodes)
 {
-    public readonly List<GNode<TEvtArg>> nodes = _nodes;
+    public readonly List<GNode<object>> nodes = _nodes;
 }
-public class EventLoop<TEvtArg>(BlockingCollection<GNode<TEvtArg>> _dataQueue)
-{
-    public BlockingCollection<GNode<TEvtArg>> dataQueue = _dataQueue;
 
-    public void Run()
+public class EventLoop()
+{
+    public BlockingCollection<GNode<object>> dataQueue = new(boundedCapacity: 10);
+
+    public async Task Run()
     {
         Utils.Log("Consumer start");
 
-        foreach (GNode<TEvtArg> item in dataQueue.GetConsumingEnumerable())
-        {
-            Utils.Log($"Consumed: {item}");
+        var intNode = new GNode<int>
+            (Evt.GStateChanged,
+            (sender, e) => Console.WriteLine(e), 
+            42, 
+            false, 
+            new List<GNode<int>>());
 
-            //await item.RaiseAsync();
+        var stringNode = new GNode<string>(
+            Evt.SyncBoard,
+            (sender, e) => Console.WriteLine(e), 
+            "Hello, world!", 
+            true, 
+            new List<GNode<string>>());
+
+        var dirGraphGNode = new DirGraphGNode([intNode, stringNode]);
+
+        foreach (GNode<object> item in dataQueue.GetConsumingEnumerable())
+        {
+            Utils.Log($"Consumed: {item.evtName}");
+
+            await item.RaiseAsync();
+
+            foreach(var child in item.children) dataQueue.Add(child);
             
         }
 

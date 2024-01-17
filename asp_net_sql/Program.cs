@@ -41,6 +41,10 @@ public class Program
         //var game = new Engine();
         //game.Start();
 
+        var evtLoop = new EventLoop();
+
+        Task.Run(evtLoop.Run);
+
         app.Run();
     }
 }

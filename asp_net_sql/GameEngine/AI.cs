@@ -43,7 +43,7 @@ class AI
 
                     Thread.Sleep(1200);
 
-                    EM.InvokeFromMainThread(() => EM.Raise(EM.Evt.AIMoved, new { }, new Point(tile.row, tile.col)));
+                    EM.InvokeFromMainThread(() => EM.Raise(Evt.AIMoved, new { }, new Point(tile.row, tile.col)));
                 });
 
                 thread.Start();
@@ -62,7 +62,7 @@ class AI
 
                     Thread.Sleep(1200);
 
-                    EM.InvokeFromMainThread(() => EM.Raise(EM.Evt.AIMoved, new { }, new Point(tile.row, tile.col)));
+                    EM.InvokeFromMainThread(() => EM.Raise(Evt.AIMoved, new { }, new Point(tile.row, tile.col)));
                 });
 
                 thread.Start();
@@ -86,7 +86,7 @@ class AI
         var rng = new Random();
         var choice = rng.Next(canTake.Count);
 
-        EM.InvokeFromMainThread(() => EM.Raise(EM.Evt.UpdateLabels, new { }, new Enum[] { LabelManager.AIMsg.Random }));
+        EM.InvokeFromMainThread(() => EM.Raise(Evt.UpdateLabels, new { }, new Enum[] { LabelManager.AIMsg.Random }));
 
         var tile = Game.board.GetTile(canTake[choice]);
 
@@ -112,7 +112,7 @@ class AI
 
         var msg = playLine.dominant.Key == selfId ? LabelManager.AIMsg.Attack : LabelManager.AIMsg.Defend;
 
-        EM.InvokeFromMainThread(() => EM.Raise(EM.Evt.UpdateLabels, new { }, new Enum[] { msg }));
+        EM.InvokeFromMainThread(() => EM.Raise(Evt.UpdateLabels, new { }, new Enum[] { msg }));
 
         return tile;
     }

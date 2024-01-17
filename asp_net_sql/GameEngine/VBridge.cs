@@ -98,7 +98,7 @@ internal class VBridge
 
         LabelManager.Reset(enumInfo);
 
-        EM.Raise(EM.Evt.UpdateLabels, new { }, new Enum[] {
+        EM.Raise(Evt.UpdateLabels, new { }, new Enum[] {
             LabelManager.Info.None,
             LabelManager.Info.Player1,
             LabelManager.Info.Player2,
@@ -109,7 +109,7 @@ internal class VBridge
     }
 
     /// <summary>
-    /// Subscribed to EM.EvtSyncBoard event<br/>
+    /// Subscribed to EvtSyncBoard event<br/>
     /// Translates game board state into UI states
     /// </summary>
     static internal EventHandler<Dictionary<Tile, Game.Roster>> SyncBoardHandler =
@@ -124,11 +124,11 @@ internal class VBridge
             cellBgs.Add(new Point(rc.row, rc.col), bg);
         }
 
-        EM.Raise(EM.Evt.SyncBoardUI, s ?? new { }, cellBgs);
+        EM.Raise(Evt.SyncBoardUI, s ?? new { }, cellBgs);
     };
 
     /// <summary>
-    /// Subscribed to EM.EvtSyncBoardWin event<br/>
+    /// Subscribed to EvtSyncBoardWin event<br/>
     /// Translates game board state into UI states;<br/>
     /// applies greyed bgs to cells owned by the winner
     /// </summary>
@@ -145,7 +145,7 @@ internal class VBridge
             cellBgs.Add(new Point(rc.row, rc.col), bgGreyedOut);
         }
 
-        EM.Raise(EM.Evt.SyncBoardUI, s ?? new { }, cellBgs);
+        EM.Raise(Evt.SyncBoardUI, s ?? new { }, cellBgs);
     };
 
     /// <summary>
@@ -159,7 +159,7 @@ internal class VBridge
         var stateMove = Utils.SafeEnumFromStr<LabelManager.Info>($"{state}Move");
         var stateBg = Utils.SafeEnumFromStr<LabelManager.Bg>($"{state}InfoBack");
 
-        EM.Raise(EM.Evt.UpdateLabels, new { }, new Enum[] { stateMove, stateBg });
+        EM.Raise(Evt.UpdateLabels, new { }, new Enum[] { stateMove, stateBg });
     };
 
     static internal EventHandler<Game.Roster> GameOverHandler =
@@ -170,7 +170,7 @@ internal class VBridge
         var stateWon = Utils.SafeEnumFromStr<LabelManager.Info>($"{state}Won");
         var stateBg = Utils.SafeEnumFromStr<LabelManager.Bg>($"{state}InfoBack");
 
-        EM.Raise(EM.Evt.UpdateLabels, new { }, new Enum[] {
+        EM.Raise(Evt.UpdateLabels, new { }, new Enum[] {
             stateWon,
             stateBg,
             LabelManager.Bg.Player1ForeDim,
@@ -181,7 +181,7 @@ internal class VBridge
     static internal EventHandler GameTieHandler =
     (object? _, EventArgs __) =>
     {
-        EM.Raise(EM.Evt.UpdateLabels, new { }, new Enum[] {
+        EM.Raise(Evt.UpdateLabels, new { }, new Enum[] {
             LabelManager.Info.Tie,
             LabelManager.Bg.None,
             LabelManager.Bg.Player1ForeDim,

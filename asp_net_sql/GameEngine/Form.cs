@@ -221,7 +221,7 @@ partial class AppForm : Control
         // (re)create AIs, if needed
 
         foreach (var aiAgent in AIs)
-            EM.Unsubscribe(EM.Evt.AIMakeMove, aiAgent.MoveHandler);
+            EM.Unsubscribe(Evt.AIMakeMove, aiAgent.MoveHandler);
         AIs.Clear();
 
         foreach (var chItm in chosenArr)
@@ -231,7 +231,7 @@ partial class AppForm : Control
                 var aiAgent = new AI(logic, chItm.RosterId);
                 AIs.Add(aiAgent);
 
-                EM.Subscribe(EM.Evt.AIMakeMove, aiAgent.MoveHandler);
+                EM.Subscribe(Evt.AIMakeMove, aiAgent.MoveHandler);
             }
 
         // start game
@@ -328,7 +328,7 @@ partial class AppForm : Control
         // (re)create AIs, if needed
 
         foreach (var aiAgent in AIs)
-            EM.Unsubscribe(EM.Evt.AIMakeMove, aiAgent.MoveHandler);
+            EM.Unsubscribe(Evt.AIMakeMove, aiAgent.MoveHandler);
         AIs.Clear();
 
         foreach (var chItm in chosenArr)
@@ -338,18 +338,18 @@ partial class AppForm : Control
                 var aiAgent = new AI(logic, chItm.RosterId);
                 AIs.Add(aiAgent);
 
-                EM.Subscribe(EM.Evt.AIMakeMove, aiAgent.MoveHandler);
+                EM.Subscribe(Evt.AIMakeMove, aiAgent.MoveHandler);
             }
 
         // start game, if necessary
         switch (prof.State)
         {
             case Game.State.Won:
-                EM.Raise(EM.Evt.GameOver, new { }, TurnWheel.CurPlayer);
+                EM.Raise(Evt.GameOver, new { }, TurnWheel.CurPlayer);
                 Game.GreyOutLostTiles(TurnWheel.CurPlayer);
                 break;
             case Game.State.Tie:
-                EM.Raise(EM.Evt.GameTie, new { }, new EventArgs());
+                EM.Raise(Evt.GameTie, new { }, new EventArgs());
                 break;
             case Game.State.Countdown:
                 TurnWheel.Advance();
@@ -366,26 +366,26 @@ partial class AppForm : Control
     void SetupSubsAndCb()
     {
        // Menu.cs
-       // EM.Subscribe(EM.Evt.GStateChanged, GStateChangedHandler());
+       // EM.Subscribe(Evt.GStateChanged, GStateChangedHandler());
 
-        EM.Subscribe(EM.Evt.GameOver, GameOverHandler());
-        EM.Subscribe(EM.Evt.GameTie, GameTieHandler());
+        EM.Subscribe(Evt.GameOver, GameOverHandler());
+        EM.Subscribe(Evt.GameTie, GameTieHandler());
 
-        EM.Subscribe(EM.Evt.UpdateLabels, LabelManager.UpdateLabelsHandler);
+        EM.Subscribe(Evt.UpdateLabels, LabelManager.UpdateLabelsHandler);
 
-        EM.Subscribe(EM.Evt.SyncBoard, VBridge.SyncBoardHandler);
-        EM.Subscribe(EM.Evt.SyncBoardWin, VBridge.SyncBoardWinHandler);
-        EM.Subscribe(EM.Evt.SyncMoveLabels, VBridge.SyncMoveLabelsHandler);
-        EM.Subscribe(EM.Evt.GameOver, VBridge.GameOverHandler);
-        EM.Subscribe(EM.Evt.GameTie, VBridge.GameTieHandler);
+        EM.Subscribe(Evt.SyncBoard, VBridge.SyncBoardHandler);
+        EM.Subscribe(Evt.SyncBoardWin, VBridge.SyncBoardWinHandler);
+        EM.Subscribe(Evt.SyncMoveLabels, VBridge.SyncMoveLabelsHandler);
+        EM.Subscribe(Evt.GameOver, VBridge.GameOverHandler);
+        EM.Subscribe(Evt.GameTie, VBridge.GameTieHandler);
 
         foreach (var cw in cellWrap)
         {
-            EM.Subscribe(EM.Evt.AIMoved, cw.AIMovedHandler);
-            EM.Subscribe(EM.Evt.SyncBoardUI, cw.SyncBoardUIHandler);
+            EM.Subscribe(Evt.AIMoved, cw.AIMovedHandler);
+            EM.Subscribe(Evt.SyncBoardUI, cw.SyncBoardUIHandler);
         }
 
-        EM.Subscribe(EM.Evt.PlayerMoved, TurnWheel.PlayerMovedHandler);
+        EM.Subscribe(Evt.PlayerMoved, TurnWheel.PlayerMovedHandler);
 
         TurnWheel.SetCallbacks(EnableUI, DisableUI);
 

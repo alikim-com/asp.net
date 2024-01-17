@@ -42,7 +42,7 @@ class Game
         set
         {
             _state = value;
-            EM.Raise(EM.Evt.GStateChanged, new { }, _state);
+            EM.Raise(Evt.GStateChanged, new { }, _state);
         }
     }
 
@@ -138,7 +138,7 @@ class Game
                 update.Add(new Tile(i, j), board[i, j]);
 
         // sync the board
-        EM.Raise(EM.Evt.SyncBoard, new { }, update);
+        EM.Raise(Evt.SyncBoard, new { }, update);
     }
 
     /// <summary>
@@ -176,7 +176,7 @@ class Game
 
         // add the cell to the update & sync cells via VBridge
         var update = new Dictionary<Tile, Roster>() { { rc, curPlayer } };
-        EM.Raise(EM.Evt.SyncBoard, new { }, update);
+        EM.Raise(Evt.SyncBoard, new { }, update);
 
         var linesInfo = ExamineLines();
 
@@ -187,7 +187,7 @@ class Game
         if (gameWon)
         {
             GState = State.Won;
-            EM.Raise(EM.Evt.GameOver, new { }, curPlayer);
+            EM.Raise(Evt.GameOver, new { }, curPlayer);
 
             GreyOutLostTiles(curPlayer);
 
@@ -203,7 +203,7 @@ class Game
         } else
         {
             GState = State.Tie;
-            EM.Raise(EM.Evt.GameTie, new { }, new EventArgs());
+            EM.Raise(Evt.GameTie, new { }, new EventArgs());
         }
     }
 
@@ -216,6 +216,6 @@ class Game
             if (bi != curPlayer && bi != Roster.None) lostTiles.Add(board.GetTile(i), bi);
         }
 
-        EM.Raise(EM.Evt.SyncBoardWin, new { }, lostTiles);
+        EM.Raise(Evt.SyncBoardWin, new { }, lostTiles);
     }
 }

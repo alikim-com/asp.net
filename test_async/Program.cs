@@ -1,6 +1,8 @@
 ﻿
 using System.Diagnostics;
 
+namespace test_async;
+
 public class Utl
 {
    static Stopwatch? stopwatch;
@@ -18,31 +20,56 @@ public class Utl
    }
 }
 
+/*
+var res = test.Start();
+
+0.000 -------------------Start: 1
+0.023 -------------------Start2: 1
+0.028 --------------------End3: 1
+3.044 --------------------End2: 5
+3.044 --------------------End: 5
+10.041 --------------------End4: 5 res: Start() returned
+10.041 --------------------Waiting: 5
+
+var res = await test.Start();
+
+0.000 -------------------Start: 1
+0.025 -------------------Start2: 1
+3.046 --------------------End2: 5
+3.046 --------------------End: 5
+3.046 --------------------End3: 5
+13.056 --------------------End4: 5 res: Start() returned
+13.057 --------------------Waiting: 5
+*/
+
 public class Program
 {
    public static async Task Main(string[] args)
    {
       await Test();
 
-      Console.WriteLine("Waiting...");
+      Utl.Log($"--------------------Waiting: {Environment.CurrentManagedThreadId}");
       Console.ReadLine();
    }
 
    public static async Task Test()
    {
       var test = new EventTest();
-      var res = test.Start();
+
+      var res = await test.Start();
+
+      Utl.Log($"--------------------End3: {Environment.CurrentManagedThreadId}");
 
       await Task.Delay(10000);
 
-      Utl.Log($"--------------------End3: {res}");
+      Utl.Log($"--------------------End4: {Environment.CurrentManagedThreadId} res: {res}");
    }
 
 }
 
 public class EventTest
 {
-   public async Task<int> Start()
+   public async Task<string> Start()
    {
       Utl.Log($"-------------------Start: {Environment.CurrentManagedThreadId}");
       var a = 1;
@@ -50,7 +77,7 @@ public class EventTest
       a = 2;
       Utl.Log($"--------------------End: {Environment.CurrentManagedThreadId}");
 
-      return 1;
+      return "Start() returned";
    }
 
    public async Task Start2()
