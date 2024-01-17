@@ -24,14 +24,9 @@ internal class Engine
     internal void Start()
     {
         var messageLoop = new MessageLoop(dataQueue);
-
         Task.Run(messageLoop.Run);
-
         var producer = new Producer(dataQueue);
-
         Task.Run(producer.Loop);
-
-
         Task.WaitAll();
     }
 }

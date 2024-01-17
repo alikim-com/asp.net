@@ -1,11 +1,13 @@
-﻿using System.Drawing;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Drawing;
 
 namespace asp_net_sql.GameEngine;
 
 /// <summary>
 /// Manages events
 /// </summary>
-internal class EM
+public class EM
 {
     /// <summary>
     /// Notifies Menu about changes in game state
@@ -63,7 +65,7 @@ internal class EM
     /// <summary>
     /// Event associations
     /// </summary>
-    internal enum Evt
+    public enum Evt
     {
         GStateChanged,
         SyncBoard,
@@ -102,7 +104,7 @@ internal class EM
     /// <param name="evt">Event to be raised</param>
     /// <param name="sender">Event sender object</param>
     /// <param name="e">Event arguments</param>
-    static internal void Raise<E>(Evt enm, object sender, E e)
+    static public void Raise<E>(Evt enm, object sender, E e)
     {
         if (!dict.TryGetValue(enm, out var _evt))
             throw new NotImplementedException($"EM.Raise : no event for Evt.{enm}");
@@ -121,7 +123,7 @@ internal class EM
         }
     }
 
-    static internal void Subscribe(Evt enm, Delegate handler)
+    static public void Subscribe(Evt enm, Delegate handler)
     {
         if (!dict.TryGetValue(enm, out var evt))
             throw new NotImplementedException($"EM.Subscribe : no event for Evt.{enm}");
@@ -129,7 +131,7 @@ internal class EM
         dict[enm] = Delegate.Combine(evt, handler);
     }
 
-    static internal void Unsubscribe(Evt enm, Delegate handler)
+    static public void Unsubscribe(Evt enm, Delegate handler)
     {
         if (!dict.TryGetValue(enm, out var evt))
             throw new NotImplementedException($"EM.Unsubscribe : no event for Evt.{enm}");
@@ -145,6 +147,68 @@ internal class EM
     /// Raise events from UI thread for safe UI access
     /// </summary>
     /// <param name="lambda"></param>
-    static internal void InvokeFromMainThread(Action lambda) { }
+    static public void InvokeFromMainThread(Action lambda) { }
     // => uiThread?.Invoke(lambda);
+}
+
+// EVENT GRAPH
+
+public class GNode<TEvtArg>(
+    EventHandler<TEvtArg> _handler,
+    TEvtArg _arg,
+    bool _async,
+    bool _await,
+    List<GNode<TEvtArg>> _children)
+{
+    public EventHandler<TEvtArg> handler = _handler;
+    public TEvtArg arg = _arg;
+    public bool async = _async;
+    public bool await = _await;
+
+    public void Raise()
+    {
+        var evtG = handler;
+        evtG.Invoke(this, arg);
+    }
+
+    public readonly List<GNode<TEvtArg>> children = _children;
+    public void AddChild(GNode<TEvtArg> node) => children.Add(node);
+    public bool RemChild(GNode<TEvtArg> node) => children.Remove(node);
+}
+
+public class DirGraphGNode<TEvtArg>(List<GNode<TEvtArg>> _nodes)
+{
+    public readonly List<GNode<TEvtArg>> nodes = _nodes;
+}
+public class EventLoop<TEvtArg>(BlockingCollection<GNode<TEvtArg>> _dataQueue)
+{
+    public BlockingCollection<GNode<TEvtArg>> dataQueue = _dataQueue;
+
+    public void Run()
+    {
+        Engine.Log("Consumer start");
+
+        foreach (GNode<TEvtArg> item in dataQueue.GetConsumingEnumerable())
+        {
+            Engine.Log($"Consumed: {item}");
+
+            item.Raise();
+            
+        }
+
+        Engine.Log("Consumer end");
+    }
+}
+
+public class EventTest
+{
+    public void InitEvents()
+    {
+        Engine.Log("InitEvents");
+    }
+
+    public void Start()
+    {
+        Engine.Log("Start");
+    }
 }
