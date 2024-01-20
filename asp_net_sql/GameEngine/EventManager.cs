@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Drawing;
 
 namespace asp_net_sql.GameEngine;
@@ -156,7 +155,7 @@ public class EM
 
 public interface IGNode
 {
-    public string Name { get; set; }
+    public Evt EvtName { get; }
     public List<IGNode> Children { get; }
 
     public Task RaiseAsync();
@@ -164,35 +163,38 @@ public interface IGNode
 
 public class GNode<TEvtArg> : IGNode
 {
-    public string Name { get; set; }
-    public Evt evtName;
+    public Evt EvtName { get; }
     public EventHandler<TEvtArg> handler;
-    public TEvtArg arg;
+    public TEvtArg? arg;
     public bool awaitFlag;
 
     public List<IGNode> Children { get; } = [];
 
     public GNode(
-        string _name,
         Evt _evtName,
         EventHandler<TEvtArg> _handler,
-        TEvtArg _arg,
+        TEvtArg? _arg,
         bool _awaitFlag,
-        List<GNode<object>> _children)
+        List<IGNode>? _children)
     {
-        evtName = _evtName;
+        EvtName = _evtName;
         handler = _handler;
         arg = _arg;
         awaitFlag = _awaitFlag;
-        Children.AddRange(_children);
-        Name = _name;
+        if (_children != null) Children.AddRange(_children);
     }
 
-    public void AddChild(IGNode node) => Children.Add(node);
-    public bool RemChild(IGNode node) => Children.Remove(node);
+    public GNode<TEvtArg> Clone => new(
+        EvtName,
+        handler,
+        arg,
+        awaitFlag,
+        null);
 
     public async Task RaiseAsync()
     {
+        if (arg == null) throw new Exception(
+            $"GNode<{typeof(TEvtArg)}>.RaiseAsync : null arg");
         var evtG = handler;
         if (awaitFlag)
             await Task.Run(() => evtG.Invoke(this, arg));
@@ -201,44 +203,77 @@ public class GNode<TEvtArg> : IGNode
     }
 }
 
-public class DirGraphGNode(List<IGNode> _nodes)
+public class DirGraph(List<IGNode> _nodes)
 {
     public readonly List<IGNode> nodes = _nodes;
+
+    public IGNode? GetNodeByEvtName(Evt evtName) =>
+        nodes.FirstOrDefault(gnode => gnode.EvtName == evtName);
+
+    public List<IGNode> CloneSubgraph(IGNode startNode)
+    {
+        List<IGNode> nodes = [];
+
+        void AddNode(IGNode _node, IGNode? _par)
+        {
+            var dnode = _node as dynamic;
+            var clone = dnode.Clone();
+            nodes.Add(clone);
+            _par?.Children.Add(clone);
+
+            foreach (var ch in dnode.Children) AddNode(ch, _node);
+        }
+
+        AddNode(startNode, null);
+
+        return nodes;
+    }
 }
 
-public class EventLoop()
+public class EventLoop
 {
-    public BlockingCollection<IGNode> dataQueue = new(boundedCapacity: 10);
+    public BlockingCollection<IGNode> dataQueue;
+
+    public readonly DirGraph dirGraph;
+
+    public EventLoop()
+    {
+        dataQueue = new(boundedCapacity: 10);
+
+        dirGraph = new DirGraph([
+
+            new GNode<Enum[]>(
+            Evt.UpdateLabels,
+            LabelManager.UpdateLabelsHandler,
+            null,
+            false,
+            null),
+
+            new GNode<string>(
+            Evt.SyncBoard,
+            (sender, e) => Utils.Log(e),
+            null,
+            true,
+            null)
+
+        ]);
+
+        var f = dirGraph.GetNodeByEvtName(Evt.UpdateLabels);
+        var s = dirGraph.GetNodeByEvtName(Evt.SyncBoard);
+        if (f == null || s == null) return;
+
+        f.Children.Add(s);
+
+        var fClone = dirGraph.CloneSubgraph(f);
+        var sClone = dirGraph.CloneSubgraph(s);
+
+
+        dataQueue.Add(f);
+    }
 
     public async Task Run()
     {
         Utils.Log("Consumer start");
-
-        // embedded test ---------
-
-        var intNode = new GNode<int>
-            ("intNode",
-            Evt.GStateChanged,
-            (sender, e) => Utils.Log($"{e}"), 
-            42, 
-            false, 
-            []);
-
-        var stringNode = new GNode<string>(
-            "StringNode",
-            Evt.SyncBoard,
-            (sender, e) => Utils.Log(e), 
-            "hello", 
-            true, 
-            []);
-
-        intNode.AddChild(stringNode);
-
-        var dirGraphGNode = new DirGraphGNode([intNode, stringNode]);
-
-        dataQueue.Add(intNode);
-
-        // -----------------------
 
         foreach (dynamic item in dataQueue.GetConsumingEnumerable())
         {
@@ -246,7 +281,7 @@ public class EventLoop()
 
             await item.RaiseAsync();
 
-            foreach(var child in item.Children) dataQueue.Add(child);
+            foreach (var child in item.Children) dataQueue.Add(child);
         }
 
         Utils.Log("Consumer end");

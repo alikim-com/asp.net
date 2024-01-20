@@ -1,13 +1,14 @@
 ﻿using System.Drawing;
 
 using System.ComponentModel;
+using System.Dynamic;
 
 namespace asp_net_sql.GameEngine;
 
 /// <summary>
 /// Updates UI labels based on subscribed events
 /// </summary>
-class LabelManager : INotifyPropertyChanged
+class LabelManager
 {
     /// <summary>
     /// Middle & bottom info panel states
@@ -116,35 +117,35 @@ class LabelManager : INotifyPropertyChanged
         {
             case AIMsg:
                 _this.InfoPanelBind += stateToString[state];
-                RaiseEvtPropertyChanged(nameof(InfoPanelBind));
+                //RaiseEvtPropertyChanged(nameof(InfoPanelBind));
                 break;
             case Info.Player1:
                 _this.LabelPlayer1Bind = stateToString[state];
-                RaiseEvtPropertyChanged(nameof(LabelPlayer1Bind));
+                //RaiseEvtPropertyChanged(nameof(LabelPlayer1Bind));
                 break;
             case Info.Player2:
                 _this.LabelPlayer2Bind = stateToString[state];
-                RaiseEvtPropertyChanged(nameof(LabelPlayer2Bind));
+                //RaiseEvtPropertyChanged(nameof(LabelPlayer2Bind));
                 break;
             case Info:
             case Countdown:
                 _this.InfoPanelBind = stateToString[state];
-                RaiseEvtPropertyChanged(nameof(InfoPanelBind));
+                //RaiseEvtPropertyChanged(nameof(InfoPanelBind));
                 break;
             case Bg:
                 if (state.ToString().Contains("Player1Fore"))
                 {
                     _this.Player1ForeBind = stateToColor[state];
-                    RaiseEvtPropertyChanged(nameof(Player1ForeBind));
+                    //RaiseEvtPropertyChanged(nameof(Player1ForeBind));
 
                 } else if (state.ToString().Contains("Player2Fore"))
                 {
                     _this.Player2ForeBind = stateToColor[state];
-                    RaiseEvtPropertyChanged(nameof(Player2ForeBind));
+                    //RaiseEvtPropertyChanged(nameof(Player2ForeBind));
                 } else
                 {
                     _this.InfoBackBind = stateToColor[state];
-                    RaiseEvtPropertyChanged(nameof(InfoBackBind));
+                    //RaiseEvtPropertyChanged(nameof(InfoBackBind));
                 }
                 break;
             default:
@@ -152,6 +153,20 @@ class LabelManager : INotifyPropertyChanged
         }
     }
 
+    static readonly dynamic _this;
+    
+    static LabelManager()
+    {
+        _this = new ExpandoObject();
+        ((INotifyPropertyChanged)_this).PropertyChanged +=
+            new PropertyChangedEventHandler(OnPropertyChanged);
+    }
+
+    private static void OnPropertyChanged(
+        object? sender, PropertyChangedEventArgs e)
+    {
+        Utils.Log($"{e.PropertyName} has changed.");
+    }
 
     /* 
      * A workaround to implement the data binding interface that requires
@@ -159,28 +174,26 @@ class LabelManager : INotifyPropertyChanged
      * 
      */
 
-    static void RaiseEvtPropertyChanged(string property)
-    {
-        var handler = _this?.PropertyChanged;
-        handler?.Invoke(_this, new PropertyChangedEventArgs(property));
-    }
+    //static void RaiseEvtPropertyChanged(string property)
+    //{
+    //    var handler = _this?.PropertyChanged;
+    //    handler?.Invoke(_this, new PropertyChangedEventArgs(property));
+    //}
 
-    static LabelManager? _this;
+    ///// <summary>
+    ///// Data bindings
+    ///// </summary>
+    //public string LabelPlayer1Bind { get; set; } = "";
+    //public string LabelPlayer2Bind { get; set; } = "";
+    //public string InfoPanelBind { get; set; } = "";
+    //public Color InfoBackBind { get; set; } = UIColors.Transparent;
+    //public Color Player1ForeBind { get; set; } = UIColors.Transparent;
+    //public Color Player2ForeBind { get; set; } = UIColors.Transparent;
 
-    /// <summary>
-    /// Data bindings
-    /// </summary>
-    public string LabelPlayer1Bind { get; set; } = "";
-    public string LabelPlayer2Bind { get; set; } = "";
-    public string InfoPanelBind { get; set; } = "";
-    public Color InfoBackBind { get; set; } = UIColors.Transparent;
-    public Color Player1ForeBind { get; set; } = UIColors.Transparent;
-    public Color Player2ForeBind { get; set; } = UIColors.Transparent;
+    //public event PropertyChangedEventHandler? PropertyChanged;
 
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    internal LabelManager()
-    {
-        _this = this;
-    }
+    //internal LabelManager()
+    //{
+    //    _this = this;
+    //}
 }
