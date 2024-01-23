@@ -41,9 +41,9 @@ public class Program
         //var game = new Engine();
         //game.Start();
 
-        var evtLoop = new EventLoop();
+        Task.Run(EventLoop.Main.Run);
 
-        Task.Run(evtLoop.Run);
+        TurnWheel.GameCountdown();
 
         app.Run();
     }

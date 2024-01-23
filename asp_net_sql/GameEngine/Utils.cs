@@ -197,7 +197,8 @@ public class Utils
     {
         stopwatch ??= Stopwatch.StartNew();
         double elapsedSec = stopwatch.Elapsed.TotalSeconds;
-        Debug.WriteLine(elapsedSec.ToString("0.000") + " " + msg);
+        //Debug.WriteLine(elapsedSec.ToString("0.000") + " " + msg);
+        Console.WriteLine(elapsedSec.ToString("0.000") + " " + msg);
     }
 }
 

@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using static imageUtility.ColorExtensions;
 
 namespace asp_net_sql.GameEngine;
 
@@ -77,14 +78,14 @@ internal class TurnWheel
         {
             DisableUICb();
 
-            EM.Raise(Evt.AIMakeMove, new { }, CurPlayer);
+         //   EM.Raise(Evt.AIMakeMove, new { }, CurPlayer);
 
         } else if (CurPlayerIsHuman)
         {
             EnableUICb();
         }
 
-        EM.Raise(Evt.SyncMoveLabels, new { }, CurPlayer);
+    //    EM.Raise(Evt.SyncMoveLabels, new { }, CurPlayer);
     }
 
     static internal void GameCountdown()
@@ -99,13 +100,14 @@ internal class TurnWheel
         Thread.Sleep(500);
         foreach (LabelManager.Countdown e in Enum.GetValues(typeof(LabelManager.Countdown)))
         {
-            // raise from UI thread for safe UI access
-            EM.InvokeFromMainThread(() => EM.Raise(Evt.UpdateLabels, new { }, new Enum[] { e }));
+            EventLoop.Main.StartEvtChain(
+                Evt.UpdateLabels,
+                new Enum[] { e });
+
             Thread.Sleep(1000);
         }
 
-        // UI safety
-        EM.InvokeFromMainThread(() => Advance());
+        Advance();
     }
 
 }
