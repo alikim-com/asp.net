@@ -1,0 +1,58 @@
+@page
+
+@using asp_net_sql.Pages.CodeBehind
+
+@model ChoosePlayer_CB
+
+@{
+    var gameRoster = Model.AsyncDbSetItems;
+}
+
+<script type="module">
+
+    // take logic from the code
+    // class toggle to change color, console.log chosens
+
+</script>
+
+<div class="main_container">
+    <div class="header">1</div>
+    <div class="left">2</div>
+    <div class="middle">
+        <div class="aspect chosen_container">
+            <div class="left_player">Left Player</div>
+            <div class="right_player">Right Player</div>
+            <div>Origin</div>
+            <div> </div>
+            <div>Identity</div>
+            <div>Identity</div>
+            <div> </div>
+            <div>Origin</div>
+
+            <div class="player_info">
+                @foreach (var item in gameRoster)
+                {
+                    var origin = item.Origin;
+                    if (origin == "None") continue;
+
+                    var id = item.ID;
+                    var identity = item.Identity;
+                    
+                    <div>@origin</div>
+                    <div> </div>
+                    <div id="chosen_left_@id">@identity</div>
+
+                    <div id="chosen_right_@id">@identity</div>
+                    <div> </div>
+                    <div>@origin</div>
+                }
+
+            </div>
+            <div class="cta center">
+                <button>For the Organics!</button>
+            </div>
+        </div>
+    </div>
+    <div class="right">4</div>
+    <div class="footer">5</div>
+</div>

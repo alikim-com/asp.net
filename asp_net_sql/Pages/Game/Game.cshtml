@@ -1,0 +1,32 @@
+@page
+
+<script type="module">
+    const get = id => document.getElementById(id);
+
+    for (let i = 0; i < 9; i++) {
+        const cell = get('cell_' + i);
+        cell.addEventListener('click', () => {
+            console.log(`cell_${i} clicked`);
+        });
+    }
+</script>
+
+<div class="main_container">
+    <div class="header">1</div>
+    <div class="left">2</div>
+    <div class="middle">
+        <div class="aspect game_container">
+            <div class="cell" id="cell_0">1</div>
+            <div class="cell" id="cell_1">2</div>
+            <div class="cell" id="cell_2">3</div>
+            <div class="cell" id="cell_3">4</div>
+            <div class="cell" id="cell_4">5</div>
+            <div class="cell" id="cell_5">6</div>
+            <div class="cell" id="cell_6">7</div>
+            <div class="cell" id="cell_7">8</div>
+            <div class="cell" id="cell_8">9</div>
+        </div>
+    </div>
+    <div class="right">4</div>
+    <div class="footer">5</div>
+</div>

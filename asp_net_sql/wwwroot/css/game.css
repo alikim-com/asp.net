@@ -1,0 +1,122 @@
+﻿* {
+    margin: 0px;
+    padding: 0px;
+    box-sizing: border-box;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    color: #999;
+    background-color: #112233;
+}
+
+div {
+    margin: 1px;
+    background: rgba(255, 0, 255, 0.035);
+    font-family: "Ubuntu Mono", Consolas, "Lucida Console", "Courier New", "SF Mono", Monaco, monospace;
+    font-size: 14px;
+}
+
+button {
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #999;
+    padding: 3px 8px 6px 8px;
+}
+
+button:hover {
+    cursor: pointer;
+}
+
+.main_container {
+    height: 100vh;
+    display: grid;
+    grid-template:
+        "header header header"
+        "left middle right" 1fr
+        "footer footer footer"
+        / 100px 1fr 100px
+}
+
+.header {
+    grid-area: header;
+}
+
+.footer {
+    grid-area: footer;
+}
+
+.left {
+    grid-area: left;
+}
+
+.middle {
+    grid-area: middle;
+    display: flex;
+    justify-content: center;
+}
+
+.right {
+    grid-area: right;
+}
+
+.aspect {
+    height: 100%;
+    aspect-ratio: 1.5/2;
+}
+
+.game_container {
+    height: 100%;
+    display: grid;
+    grid-template-rows: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.game_container .cell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.chosen_container {
+    display: grid;
+    grid-template-rows: 1fr 30px auto auto 200px 80px;
+    grid-template-columns: 5fr 1fr 10fr 10fr 1fr 5fr;
+}
+
+.left_player {
+    grid-area: 1/1/2/4;
+}
+
+.right_player {
+    grid-area: 1/4/2/7;
+}
+
+.player_info {
+    grid-area: 3/1/4/7;
+    display: grid;
+    grid-template-rows: auto;
+    grid-template-columns: 5fr 1fr 10fr 10fr 1fr 5fr;
+}
+
+.cta {
+    grid-area: 6/1/7/7;
+}
+
+.center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+[id^="chosen_"] {
+    height: 50px;
+    display: flex;
+    align-items: center;
+}

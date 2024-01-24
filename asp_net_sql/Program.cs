@@ -38,12 +38,9 @@ public class Program
 
         app.MapRazorPages();
 
-        //var game = new Engine();
-        //game.Start();
-
-        Task.Run(EventLoop.Main.Run);
-
-        TurnWheel.GameCountdown();
+        //Task.Run(EventLoop.Main.Run);
+        
+        //TurnWheel.GameCountdown();
 
         app.Run();
     }
