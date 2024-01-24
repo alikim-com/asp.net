@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" style="scrollbar-width: none;">
+
+<head>
+   <meta charset="utf-8" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <style>
+      * {
+         margin: 0px;
+         padding: 0px;
+         box-sizing: border-box;
+
+         -webkit-user-select: none;
+         -moz-user-select: none;
+         -ms-user-select: none;
+         user-select: none;
+      }
+
+      body {
+         margin: 0;
+         padding: 0;
+         color: #999;
+         background-color: #112233;
+      }
+
+      button {
+         border: 1px solid rgba(255, 255, 255, 0.25);
+         background-color: rgba(255, 255, 255, 0.1);
+         color: #999;
+         padding: 3px 8px 6px 8px;
+      }
+
+      button:hover {
+         cursor: pointer;
+      }
+
+      div {
+         margin: 1px;
+         background: rgba(255, 0, 255, 0.035);
+         font-family: "Ubuntu Mono", Consolas, "Lucida Console", "Courier New", "SF Mono", Monaco, monospace;
+         font-size: 14px;
+      }
+
+      .main_container {
+         height: 100vh;
+         display: grid;
+         grid-template:
+            "header header header"
+            "left middle right" 1fr
+            "footer footer footer"
+            / 100px 1fr 100px
+      }
+
+      .header {
+         grid-area: header;
+      }
+
+      .footer {
+         grid-area: footer;
+      }
+
+      .left {
+         grid-area: left;
+      }
+
+      .middle {
+         grid-area: middle;
+         display: flex;
+         justify-content: center;
+      }
+
+      .right {
+         grid-area: right;
+      }
+
+      .aspect {
+         height: 100%;
+         aspect-ratio: 1.5/2;
+      }
+
+      .chosen_container {
+         display: grid;
+         grid-template-rows: 1fr 30px auto auto 50px 80px;
+         grid-template-columns: 5fr 1fr 10fr 10fr 1fr 5fr;
+      }
+
+      .left_player {
+         grid-area: 1/1/2/4;
+      }
+
+      .right_player {
+         grid-area: 1/4/2/7;
+      }
+
+      .player_info {
+         grid-area: 3/1/4/7;
+         display: grid;
+         grid-template-rows: auto;
+         grid-template-columns: 5fr 1fr 10fr 10fr 1fr 5fr;
+      }
+
+      .cta {
+         grid-area: 6/1/7/7;
+      }
+
+      .center {
+         display: flex;
+         align-items: center;
+         justify-content: center;
+      }
+
+      [id^="cell"] {
+         height: 25px;
+         display: flex;
+         align-items: center;
+      }
+
+
+      .clean_scroll {
+         overflow: scroll;
+         -ms-overflow-style: none;
+         scrollbar-width: none;
+      }
+
+      .clean_scroll::-webkit-scrollbar {
+         display: none;
+      }
+   </style>
+   <title></title>
+</head>
+
+<body class="clean_scroll">
+   <script type="module">
+      const get = id => document.getElementById(id);
+
+      for (let i = 0; i < 9; i++) {
+         const cell = get('cell_' + i);
+         cell.addEventListener('click', () => {
+            console.log(`cell_${i} clicked`);
+         });
+      }
+   </script>
+   <!DOCTYPE html>
+   <html lang="en">
+
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+
+
+      </style>
+      <title>Chosen</title>
+   </head>
+
+   <body>
+
+      <div class="main_container">
+         <div class="header">1</div>
+         <div class="left">2</div>
+         <div class="middle">
+            <div class="aspect chosen_container">
+               <div class="left_player">Left Player</div>
+               <div class="right_player">Right Player</div>
+               <div id="cell_1">Origin</div>
+               <div id="cell_2"> </div>
+               <div id="cell_3">Identity</div>
+               <div id="cell_4">Identity</div>
+               <div id="cell_5"> </div>
+               <div id="cell_6">Origin</div>
+
+               <div class="player_info">
+
+                  <div class="" id="cell_11">Origin</div>
+                  <div id="cell_22"> </div>
+                  <div id="cell_33">Identity</div>
+                  <div id="cell_44">Identity</div>
+                  <div id="cell_55"> </div>
+                  <div id="cell_66">Origin</div>
+
+                  <div id="cell_11">Origin</div>
+                  <div id="cell_22"> </div>
+                  <div id="cell_33">Identity</div>
+                  <div id="cell_44">Identity</div>
+                  <div id="cell_55"> </div>
+                  <div id="cell_66">Origin</div>
+
+               </div>
+               <div class="cta center">
+                  <button>For the Organics!</button>
+               </div>
+            </div>
+         </div>
+         <div class="right">4</div>
+         <div class="footer">5</div>
+      </div>
+
+   </body>
+
+   </html>
+
+</body>
+
+</html>

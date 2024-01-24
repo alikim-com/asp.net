@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" style="scrollbar-width: none;">
+
+<head>
+   <meta charset="utf-8" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <style>
+      * {
+         margin: 0px;
+         padding: 0px;
+         box-sizing: border-box;
+
+         -webkit-user-select: none;
+         -moz-user-select: none;
+         -ms-user-select: none;
+         user-select: none;
+      }
+
+      body {
+         margin: 0;
+         padding: 0;
+         color: #999;
+         background-color: #112233;
+      }
+
+      div {
+         margin: 3px;
+         border: solid 1px purple;
+      }
+
+      .main_container {
+         height: 100vh;
+         display: grid;
+         grid-template:
+            "header header header" 30px
+            "left middle right" 1fr
+            "footer footer footer" 30px
+            / 100px 1fr 100px
+      }
+
+      .header {
+         grid-area: header;
+      }
+
+      .footer {
+         grid-area: footer;
+      }
+
+      .left {
+         grid-area: left;
+      }
+
+      .middle {
+         grid-area: middle;
+         display: flex;
+         justify-content: center;
+      }
+
+      .right {
+         grid-area: right;
+      }
+
+      .aspect {
+         height: 100%;
+         aspect-ratio: 1.5/2;
+      }
+
+      .game_container {
+
+         height: 100%;
+         display: grid;
+         grid-template-rows: 1fr 1fr 1fr;
+         grid-template-columns: 1fr 1fr 1fr;
+      }
+
+      .game_container .cell {
+         display: flex;
+         justify-content: center;
+         align-items: center;
+         cursor: pointer;
+      }
+
+
+      .clean_scroll {
+         overflow: scroll;
+         -ms-overflow-style: none;
+         scrollbar-width: none;
+      }
+
+      .clean_scroll::-webkit-scrollbar {
+         display: none;
+      }
+   </style>
+   <title></title>
+</head>
+
+<body class="clean_scroll">
+   <script type="module">
+      const get = id => document.getElementById(id);
+
+      for (let i = 0; i < 9; i++) {
+         const cell = get('cell_' + i);
+         cell.addEventListener('click', () => {
+            console.log(`cell_${i} clicked`);
+         });
+      }
+   </script>
+   <!DOCTYPE html>
+   <html lang="en">
+
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+
+
+      </style>
+      <title>Grid-based Page</title>
+   </head>
+
+   <body>
+
+      <div class="main_container">
+         <div class="header">1</div>
+         <div class="left">2</div>
+         <div class="middle">
+            <div class="aspect game_container">
+               <div class="cell" id="cell_0">1</div>
+               <div class="cell" id="cell_1">2</div>
+               <div class="cell" id="cell_2">3</div>
+               <div class="cell" id="cell_3">4</div>
+               <div class="cell" id="cell_4">5</div>
+               <div class="cell" id="cell_5">6</div>
+               <div class="cell" id="cell_6">7</div>
+               <div class="cell" id="cell_7">8</div>
+               <div class="cell" id="cell_8">9</div>
+            </div>
+         </div>
+         <div class="right">4</div>
+         <div class="footer">5</div>
+      </div>
+
+   </body>
+
+   </html>
+
+</body>
+
+</html>
