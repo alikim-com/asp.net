@@ -1,76 +1,74 @@
-﻿using System.Collections.Concurrent;
-using System.Diagnostics;
+﻿
+using asp_net_sql.Models;
 
 namespace asp_net_sql.GameEngine;
 
+public enum Side
+{
+    None,
+    Left,
+    Right
+}
+
+internal enum Roster
+{
+    None,
+    Human_1,
+    Human_2,
+    AI_1,
+    AI_2
+}
+
 internal class Engine
 {
-    internal BlockingCollection<int> dataQueue;
+    public static List<ChoiceItem> roster = [];
 
-    internal Engine(int capacity = 10)
+    public static void SetRoster(List<EnumGameRoster> _AsyncDbSetItems)
     {
-        dataQueue = new(boundedCapacity: capacity);
-    }
+        roster.Clear();
 
-    internal void Start()
-    {
-        var messageLoop = new MessageLoop(dataQueue);
-        Task.Run(messageLoop.Run);
-        var producer = new Producer(dataQueue);
-        Task.Run(producer.Loop);
-        Task.WaitAll();
+        foreach(var itm in _AsyncDbSetItems)
+        {
+            var rosterName = itm.Origin != "None" ? $"{itm.Origin}_{itm.IDX}" : "None";
+            if (!Enum.TryParse(typeof(Roster), rosterName, out object? rosterId))
+                throw new Exception($"Engine.SetRoster : Roster.'{rosterName}' not found ");
+
+            roster.Add(new ChoiceItem(
+                (Roster)rosterId,
+                Side.None,
+                itm.Origin,
+                itm.Identity
+                ));
+        }
     }
 }
 
-internal class Producer
+
+class ChoiceItem
 {
-    internal BlockingCollection<int> dataQueue;
+    internal bool chosen;
 
-    internal Producer(BlockingCollection<int> _dataQueue)
+    public Roster RosterId { get; set; } = Roster.None;
+    public string IdentityName { get; set; } = "";
+    public Side SideId { get; set; } = Side.None;
+    public string OriginType { get; set; } = "";
+
+    internal ChoiceItem(
+        Roster _rosterId, 
+        Side _side, 
+        string _origin, 
+        string _identity)
     {
-        dataQueue = _dataQueue;
+        chosen = false;
+        RosterId = _rosterId;
+        SideId = _side;
+        OriginType = _origin;
+        IdentityName = _identity;
     }
 
-    internal void Loop()
+    public ChoiceItem()
     {
-        Utils.Log("Producer start");
-
-        for (int i = 0; i < 3; i++)
-        {
-            Utils.Log($"Producer iteration: {i}");
-            dataQueue.Add(i);
-            Utils.Log($"Produced: {i}");
-            Utils.Log($"Producer asleep");
-            Thread.Sleep(2000);
-            Utils.Log($"Producer awake");
-        }
-
-        Utils.Log("Producer closed");
-        dataQueue.CompleteAdding();
-    }
-}
-
-internal class MessageLoop
-{
-    internal BlockingCollection<int> dataQueue;
-
-    internal MessageLoop(BlockingCollection<int> _dataQueue)
-    {
-        dataQueue = _dataQueue;
+        // for JsonSerializer.Deserialize<P>(input);
     }
 
-    internal void Run()
-    {
-        Utils.Log("Consumer start");
-
-        foreach (int item in dataQueue.GetConsumingEnumerable())
-        {
-            Utils.Log($"Consumed: {item}");
-            Utils.Log($"Consumer asleep");
-            Thread.Sleep(4000); Task.Delay(4000);
-            Utils.Log($"Consumer awake");
-        }
-
-        Utils.Log("Consumer closed");
-    }
 }

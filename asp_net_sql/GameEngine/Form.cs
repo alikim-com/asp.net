@@ -461,7 +461,7 @@ partial class AppForm : Control
         g.FillRectangle(brush, rect);
 
         Image?[] headImage = chosen.Select(itm =>
-            (Image?)Resource.ResourceManager.GetObject($"{itm.RosterId}_{itm.side}_Head")).ToArray();
+            (Image?)Resource.ResourceManager.GetObject($"{itm.RosterId}_{itm.SideId}_Head")).ToArray();
 
         KeyValuePair<Image?, Image?> leftRightImage = firstChosenIsLeft ?
             new(headImage[0], headImage[1]) : new(headImage[1], headImage[0]);

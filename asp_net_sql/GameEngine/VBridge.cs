@@ -64,7 +64,7 @@ internal class VBridge
 
         foreach (var chItem in chosen)
         {
-            var side = chItem.side;
+            var side = chItem.SideId;
 
             rosterToSide.Add(chItem.RosterId, side);
 

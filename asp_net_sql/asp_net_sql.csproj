@@ -5,12 +5,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="_backup\**" />
-    <Content Remove="_backup\**" />
-    <EmbeddedResource Remove="_backup\**" />
-    <None Remove="_backup\**" />
-  </ItemGroup>
-  <ItemGroup>
     <None Remove="Pages\Game\Game.html" />
     <None Remove="Pages\Game\Index.html" />
   </ItemGroup>

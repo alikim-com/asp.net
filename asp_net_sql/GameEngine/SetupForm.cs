@@ -62,7 +62,7 @@ partial class SetupForm
         int allegX = allegLeft.Location.X + allegLeft.Width;
         locId.Y += 15;
 
-        foreach (var (rostItem, identity) in RosterIdentity)
+        foreach (var (rostItem, identity) in Game.rosterIdentity)
         {
             tab++;
             locId.Y += 25;
@@ -80,7 +80,7 @@ partial class SetupForm
                 labName.Location.Y + (labName.Height - labAlleg.Height) / 2
             );
 
-            roster.Add(new(rostItem, Side.Left, labAlleg, labName, foreLeft, foreLeftDim));
+            roster.Add(new(rostItem, Side.Left, labAlleg.Text, labName.Text));
         }
 
         // right side
@@ -108,11 +108,11 @@ partial class SetupForm
         var rosterLeft = roster.ToList();
         foreach (var choiceItem in rosterLeft)
         {
-            var (origLab, identLab) = choiceItem;
-            var _origLab = AddMirrorLabel(panelRight, origLab, "Right" + origLab.Name, tab++, origLab.Text);
-            var _identLab = AddMirrorLabel(panelRight, identLab, identLab.Name.Replace("Left", "Right"), tab++, identLab.Text);
+           // var (origLab, identLab) = choiceItem;
+          //  var _origLab = AddMirrorLabel(panelRight, origLab, "Right" + origLab.Name, tab++, origLab.Text);
+         //   var _identLab = AddMirrorLabel(panelRight, identLab, identLab.Name.Replace("Left", "Right"), tab++, identLab.Text);
 
-            roster.Add(new(choiceItem.RosterId, Side.Right, _origLab, _identLab, foreRight, foreRightDim));
+          //  roster.Add(new(choiceItem.RosterId, Side.Right, _origLab.Text, _identLab.Text));
         }
 
         foreach (var rec in roster)
@@ -123,21 +123,21 @@ partial class SetupForm
     {
         EventHandler handler = (object? sender, EventArgs e) =>
         {
-            var side = Side;
-            var rosterThisSide = roster.Where(itm => itm.side == side && itm != choiceItem);
-            var rosterOtherSide = roster.Where(itm => itm.side != side);
+            var side = choiceItem.SideId;
+            var rosterThisSide = roster.Where(itm => itm.SideId == side && itm != choiceItem);
+            var rosterOtherSide = roster.Where(itm => itm.SideId != side);
 
             var (panelThisSide, panelOtherSide) = side == Side.Left ? (panelLeft, panelRight) : (panelRight, panelLeft);
 
             panelThisSide.BackgroundImage = GetBackgroundImage(choiceItem.RosterId, side);
 
             choiceItem.chosen = true;
-            choiceItem.Activate();
+           // choiceItem.Activate();
 
             foreach (var rec in rosterThisSide)
             {
                 rec.chosen = false;
-                rec.Deactivate();
+             //   rec.Deactivate();
             }
 
             var rosterId = choiceItem.RosterId;
@@ -149,7 +149,7 @@ partial class SetupForm
                 panelOtherSide.BackgroundImage = null;
 
                 mirrorItem.chosen = false;
-                foreach (var rec in rosterOtherSide) rec.Activate();
+               // foreach (var rec in rosterOtherSide) rec.Activate();
             }
 
             // update button messages
@@ -176,7 +176,7 @@ partial class SetupForm
 
         };
 
-        choiceItem.SetOnClickHandler(handler);
+      //  choiceItem.SetOnClickHandler(handler);
     }
 
     void UpdateButton(BtnMessage msg)
