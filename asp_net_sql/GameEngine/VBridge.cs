@@ -13,11 +13,11 @@ internal class VBridge
     /// <summary>
     /// Auxiliary map
     /// </summary>
-    static readonly Dictionary<ChoiceItem.Side, CellWrapper.BgMode> sideToBg = new()
+    static readonly Dictionary<Side, CellWrapper.BgMode> sideToBg = new()
     {
-        { ChoiceItem.Side.None, CellWrapper.BgMode.Default },
-        { ChoiceItem.Side.Left, CellWrapper.BgMode.Player1 },
-        { ChoiceItem.Side.Right, CellWrapper.BgMode.Player2 },
+        { Side.None, CellWrapper.BgMode.Default },
+        { Side.Left, CellWrapper.BgMode.Player1 },
+        { Side.Right, CellWrapper.BgMode.Player2 },
     };
 
     // LabelManager
@@ -25,16 +25,16 @@ internal class VBridge
     /// <summary>
     /// Auxiliary map
     /// </summary>
-    static readonly Dictionary<ChoiceItem.Side, LabelManager.Info> sideToPlayer = new()
+    static readonly Dictionary<Side, LabelManager.Info> sideToPlayer = new()
     {
-        { ChoiceItem.Side.Left, LabelManager.Info.Player1 },
-        { ChoiceItem.Side.Right, LabelManager.Info.Player2 }
+        { Side.Left, LabelManager.Info.Player1 },
+        { Side.Right, LabelManager.Info.Player2 }
     };
 
     /// <summary>
     /// Memorise players' sides for mapping them into cell bgs & message labels
     /// </summary>
-    static readonly Dictionary<Game.Roster, ChoiceItem.Side> rosterToSide = new();
+    static readonly Dictionary<Roster, Side> rosterToSide = new();
 
     // labels colors
     static readonly Color infoBackNone = Color.FromArgb(80, 0, 0, 0);
@@ -55,7 +55,7 @@ internal class VBridge
     static internal void Reset(IEnumerable<ChoiceItem> chosen)
     {
         rosterToSide.Clear();
-        rosterToSide.Add(Game.Roster.None, ChoiceItem.Side.None);
+        rosterToSide.Add(Roster.None, Side.None);
 
         var enumInfo = new Dictionary<Enum, object>
         {
@@ -86,7 +86,7 @@ internal class VBridge
             var stateFore = Utils.SafeEnumFromStr<LabelManager.Bg>($"{state}Fore");
             var stateForeDim = Utils.SafeEnumFromStr<LabelManager.Bg>($"{state}ForeDim");
 
-            var sideIsLeft = side == ChoiceItem.Side.Left;
+            var sideIsLeft = side == Side.Left;
             var infoBackColor = sideIsLeft ? infoBackLeft : infoBackRight;
             var foreColor = sideIsLeft ? UIColors.ForeLeft : UIColors.ForeRight;
             var foreColorDim = sideIsLeft ? foreLeftDim : foreRightDim;
@@ -112,8 +112,8 @@ internal class VBridge
     /// Subscribed to EvtSyncBoard event<br/>
     /// Translates game board state into UI states
     /// </summary>
-    static internal EventHandler<Dictionary<Tile, Game.Roster>> SyncBoardHandler =
-    (object? s, Dictionary<Tile, Game.Roster> e) =>
+    static internal EventHandler<Dictionary<Tile, Roster>> SyncBoardHandler =
+    (object? s, Dictionary<Tile, Roster> e) =>
     {
         Dictionary<Point, CellWrapper.BgMode> cellBgs = new();
 
@@ -132,8 +132,8 @@ internal class VBridge
     /// Translates game board state into UI states;<br/>
     /// applies greyed bgs to cells owned by the winner
     /// </summary>
-    static internal EventHandler<Dictionary<Tile, Game.Roster>> SyncBoardWinHandler =
-    (object? s, Dictionary<Tile, Game.Roster> e) =>
+    static internal EventHandler<Dictionary<Tile, Roster>> SyncBoardWinHandler =
+    (object? s, Dictionary<Tile, Roster> e) =>
     {
         Dictionary<Point, CellWrapper.BgMode> cellBgs = new();
 
@@ -151,8 +151,8 @@ internal class VBridge
     /// <summary>
     /// Subscribed to EM.SyncMoveLabels event raised by TurnWheel to update labels on player move
     /// </summary>
-    static internal EventHandler<Game.Roster> SyncMoveLabelsHandler =
-    (object? _, Game.Roster rostId) =>
+    static internal EventHandler<Roster> SyncMoveLabelsHandler =
+    (object? _, Roster rostId) =>
     {
         var side = Utils.SafeDictValue(rosterToSide, rostId);
         var state = Utils.SafeDictValue(sideToPlayer, side);
@@ -162,8 +162,8 @@ internal class VBridge
         EM.Raise(Evt.UpdateLabels, new { }, new Enum[] { stateMove, stateBg });
     };
 
-    static internal EventHandler<Game.Roster> GameOverHandler =
-    (object? _, Game.Roster winner) =>
+    static internal EventHandler<Roster> GameOverHandler =
+    (object? _, Roster winner) =>
     {
         var side = Utils.SafeDictValue(rosterToSide, winner);
         var state = Utils.SafeDictValue(sideToPlayer, side);

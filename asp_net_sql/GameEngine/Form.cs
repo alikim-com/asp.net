@@ -61,7 +61,7 @@ partial class AppForm : Control
 
     readonly LabelManager labMgr;
 
-    static readonly Dictionary<KeyValuePair<Game.Roster, Game.Roster>, Image> mainBg = new();
+    static readonly Dictionary<KeyValuePair<Roster, Roster>, Image> mainBg = new();
 
     static internal void ApplyDoubleBuffer(object control)
     {
@@ -227,7 +227,7 @@ partial class AppForm : Control
         foreach (var chItm in chosenArr)
             if (chItm.OriginType == "AI")
             {
-                var logic = chItm.RosterId == Game.Roster.AI_One ? AI.Logic.RNG : AI.Logic.Easy;
+                var logic = chItm.RosterId == Roster.AI_1 ? AI.Logic.RNG : AI.Logic.Easy;
                 var aiAgent = new AI(logic, chItm.RosterId);
                 AIs.Add(aiAgent);
 
@@ -241,16 +241,16 @@ partial class AppForm : Control
     class SaveGame : Utils.INamedProfile
     {
         public string Name { get; set; } = "";
-        public Game.Roster[] Board { get; set; } = Array.Empty<Game.Roster>();
-        public Game.Roster[] TurnList { get; set; } = Array.Empty<Game.Roster>();
+        public Roster[] Board { get; set; } = Array.Empty<Roster>();
+        public Roster[] TurnList { get; set; } = Array.Empty<Roster>();
         public Game.State State { get; set; }
         public int TurnWheelHead { get; set; }
         public IEnumerable<ChoiceItem> Chosen { get; set; } = Enumerable.Empty<ChoiceItem>();
 
         public SaveGame(
             string _name,
-            Game.Roster[] _board,
-            Game.Roster[] _turnList,
+            Roster[] _board,
+            Roster[] _turnList,
             Game.State _state,
             int _turnWheelHead,
             IEnumerable<ChoiceItem> _chosen
@@ -259,11 +259,11 @@ partial class AppForm : Control
             Name = _name;
 
             var len = _board.Length;
-            Board = new Game.Roster[len];
+            Board = new Roster[len];
             Array.Copy(_board, Board, len);
 
             len = _turnList.Length;
-            TurnList = new Game.Roster[len];
+            TurnList = new Roster[len];
             Array.Copy(_turnList, TurnList, len);
 
             State = _state;
@@ -311,7 +311,7 @@ partial class AppForm : Control
             if (cw is IComponent iComp)
             {
                 iComp.Reset();
-                var owned = Game.board[cw.RC.X, cw.RC.Y] != Game.Roster.None;
+                var owned = Game.board[cw.RC.X, cw.RC.Y] != Roster.None;
                 if (owned || gameOver)
                 {
                     iComp.Disable();
@@ -334,7 +334,7 @@ partial class AppForm : Control
         foreach (var chItm in chosenArr)
             if (chItm.OriginType == "AI")
             {
-                var logic = chItm.RosterId == Game.Roster.AI_One ? AI.Logic.RNG : AI.Logic.Easy;
+                var logic = chItm.RosterId == Roster.AI_1 ? AI.Logic.RNG : AI.Logic.Easy;
                 var aiAgent = new AI(logic, chItm.RosterId);
                 AIs.Add(aiAgent);
 
@@ -360,7 +360,7 @@ partial class AppForm : Control
         }
     }
 
-    EventHandler<Game.Roster> GameOverHandler() => (object? _, Game.Roster __) => ShowEndGameButton(true);
+    EventHandler<Roster> GameOverHandler() => (object? _, Roster __) => ShowEndGameButton(true);
     EventHandler GameTieHandler() => (object? _, EventArgs e) => ShowEndGameButton(true);
 
     void SetupSubsAndCb()
@@ -388,6 +388,8 @@ partial class AppForm : Control
         EM.Subscribe(Evt.PlayerMoved, TurnWheel.PlayerMovedHandler);
 
         TurnWheel.SetCallbacks(EnableUI, DisableUI);
+
+        // reload game
 
         toolStripButton.Click += (object? _, EventArgs __) =>
         {
@@ -428,12 +430,12 @@ partial class AppForm : Control
         if (chosenArr.Length != 2)
             throw new Exception($"Form.AssertPlayers : wrong number of players '{chosenArr.Length}'");
 
-        firstChosenIsLeft = chosenArr[0].side == ChoiceItem.Side.Left;
+        firstChosenIsLeft = chosenArr[0].SideId == Side.Left;
     }
 
     void CreateBackground()
     {
-        KeyValuePair<Game.Roster, Game.Roster> leftRightBg = firstChosenIsLeft ?
+        KeyValuePair<Roster, Roster> leftRightBg = firstChosenIsLeft ?
             new(chosenArr[0].RosterId, chosenArr[1].RosterId) :
             new(chosenArr[1].RosterId, chosenArr[0].RosterId);
 

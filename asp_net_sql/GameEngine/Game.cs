@@ -8,21 +8,13 @@ class Game
     /// <summary>
     /// Pattern for human player names Human*, for AI players - AI*
     /// </summary>
-    internal enum Roster
-    {
-        None,
-        Human_One,
-        Human_Two,
-        AI_One,
-        AI_Two
-    }
 
     static internal readonly Dictionary<Roster, string> rosterIdentity = new()
     {
-        { Roster.Human_One, "Ironheart" },
-        { Roster.Human_Two, "Silverlight" },
-        { Roster.AI_One, "Quantum" },
-        { Roster.AI_Two, "Syncstorm" }
+        { Roster.Human_1, "Ironheart" },
+        { Roster.Human_2, "Silverlight" },
+        { Roster.AI_1, "Quantum" },
+        { Roster.AI_2, "Syncstorm" }
     };
 
     static Roster[] _turnList = Array.Empty<Roster>();

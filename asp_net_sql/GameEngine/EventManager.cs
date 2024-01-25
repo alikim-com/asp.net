@@ -35,13 +35,13 @@ public class EM
     /// </summary>
     /// <param>List of cells to update,<br/>
     /// containing row(X) and column(Y) of a cell and the player occupying it</param>
-    static event EventHandler<Dictionary<Tile, Game.Roster>> EvtSyncBoard = delegate { };
+    static event EventHandler<Dictionary<Tile, Roster>> EvtSyncBoard = delegate { };
     /// <summary>
     /// Translates game states into UI states in VBridge
     /// </summary>
     /// <param>List of cells to grey out upon winning,<br/>
     /// containing row(X) and column(Y) of a cell and the player occupying it</param>
-    static event EventHandler<Dictionary<Tile, Game.Roster>> EvtSyncBoardWin = delegate { };
+    static event EventHandler<Dictionary<Tile, Roster>> EvtSyncBoardWin = delegate { };
     /// <summary>
     /// Sync the board with EvtSyncBoard translation done by VBridge
     /// </summary>
@@ -51,11 +51,11 @@ public class EM
     /// <summary>
     /// Issued by TurnWheel to make AI take action
     /// </summary>
-    static event EventHandler<Game.Roster> EvtAIMakeMove = delegate { };
+    static event EventHandler<Roster> EvtAIMakeMove = delegate { };
     /// <summary>
     /// Issued by TurnWheel for VBridge to update labels on player move
     /// </summary>
-    static event EventHandler<Game.Roster> EvtSyncMoveLabels = delegate { };
+    static event EventHandler<Roster> EvtSyncMoveLabels = delegate { };
     /// <summary>
     /// Raised by clicking or simulating a click on a cell
     /// </summary>
@@ -69,7 +69,7 @@ public class EM
     /// <summary>
     /// Raised by Game when the current game is over
     /// </summary>
-    static event EventHandler<Game.Roster> EvtGameOver = delegate { };
+    static event EventHandler<Roster> EvtGameOver = delegate { };
     /// <summary>
     /// Raised by Game when the current game is a tie
     /// </summary>

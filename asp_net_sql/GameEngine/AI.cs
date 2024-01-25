@@ -12,10 +12,10 @@ class AI
     }
 
     readonly Logic logic;
-    readonly Game.Roster selfId;
-    internal EventHandler<Game.Roster> MoveHandler;
+    readonly Roster selfId;
+    internal EventHandler<Roster> MoveHandler;
 
-    internal AI(Logic _logic, Game.Roster _selfId)
+    internal AI(Logic _logic, Roster _selfId)
     {
         logic = _logic;
         selfId = _selfId;
@@ -26,12 +26,12 @@ class AI
     /// Choose a board cell
     /// </summary>
     /// <param name="count">The number of remaining UI elements to click</param>
-    EventHandler<Game.Roster> AIMakeMoveHandler()
+    EventHandler<Roster> AIMakeMoveHandler()
     {
         return logic switch
         {
             Logic.RNG =>
-            (object? _, Game.Roster curPlayer) =>
+            (object? _, Roster curPlayer) =>
             {
                 if (curPlayer != selfId) return;
 
@@ -50,7 +50,7 @@ class AI
             }
             ,
             Logic.Easy =>
-            (object? _, Game.Roster curPlayer) =>
+            (object? _, Roster curPlayer) =>
             {
                 if (curPlayer != selfId) return;
 
@@ -78,7 +78,7 @@ class AI
         var canTake = new List<int>();
 
         for (int i = 0; i < Game.board.Length; i++)
-            if (Game.CanTakeBoardTile(i, out Game.Roster _)) canTake.Add(i);
+            if (Game.CanTakeBoardTile(i, out Roster _)) canTake.Add(i);
 
         if (canTake.Count == 0)
             throw new Exception("AI.LogicRNG : run on full board");

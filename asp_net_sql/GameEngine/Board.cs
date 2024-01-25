@@ -15,21 +15,21 @@ struct Tile
     }
 }
 
-class Board : IEnumerable<Game.Roster>
+class Board : IEnumerable<Roster>
 {
 
-    readonly Game.Roster[] board;
+    readonly Roster[] board;
 
     internal readonly int width;
     internal readonly int height;
     internal readonly int Length;
 
-    internal Board(int _width, int _height, Game.Roster _def)
+    internal Board(int _width, int _height, Roster _def)
     {
         width = _width;
         height = _height;
         Length = _width * _height;
-        board = new Game.Roster[Length];
+        board = new Roster[Length];
 
         Array.Fill(board, _def);
     }
@@ -45,7 +45,7 @@ class Board : IEnumerable<Game.Roster>
         return new Tile(row, col);
     }
 
-    internal Game.Roster this[int index]
+    internal Roster this[int index]
     {
         get
         {
@@ -63,7 +63,7 @@ class Board : IEnumerable<Game.Roster>
         }
     }
 
-    internal Game.Roster this[int row, int col]
+    internal Roster this[int row, int col]
     {
         get
         {
@@ -86,23 +86,23 @@ class Board : IEnumerable<Game.Roster>
         }
     }
 
-    public IEnumerator<Game.Roster> GetEnumerator() => new BoardEtor(board);
+    public IEnumerator<Roster> GetEnumerator() => new BoardEtor(board);
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }
 
-class BoardEtor : IEnumerator<Game.Roster>
+class BoardEtor : IEnumerator<Roster>
 {
-    readonly Game.Roster[] list;
+    readonly Roster[] list;
     int head;
 
-    internal BoardEtor(Game.Roster[] _list)
+    internal BoardEtor(Roster[] _list)
     {
         list = _list;
         head = -1;
     }
 
-    public Game.Roster Current => list[head];
+    public Roster Current => list[head];
 
     object IEnumerator.Current => Current;
 
@@ -117,7 +117,7 @@ class BoardEtor : IEnumerator<Game.Roster>
     public void Reset() { head = -1; }
 }
 
-class Line : IEnumerable<Game.Roster>
+class Line : IEnumerable<Roster>
 {
     internal readonly int Length;
     readonly Tile[] rc;
@@ -138,7 +138,7 @@ class Line : IEnumerable<Game.Roster>
         return rc[index];
     }
 
-    internal Game.Roster this[int index]
+    internal Roster this[int index]
     {
         get
         {
@@ -156,12 +156,12 @@ class Line : IEnumerable<Game.Roster>
         }
     }
 
-    public IEnumerator<Game.Roster> GetEnumerator() => new LineEtor(board, rc);
+    public IEnumerator<Roster> GetEnumerator() => new LineEtor(board, rc);
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }
 
-class LineEtor : IEnumerator<Game.Roster>
+class LineEtor : IEnumerator<Roster>
 {
     readonly Board list;
     readonly Tile[] rc;
@@ -174,7 +174,7 @@ class LineEtor : IEnumerator<Game.Roster>
         head = -1;
     }
 
-    public Game.Roster Current => list[rc[head].row, rc[head].col];
+    public Roster Current => list[rc[head].row, rc[head].col];
 
     object IEnumerator.Current => Current;
 
@@ -196,8 +196,8 @@ class LineInfo
 {
     internal readonly Line line;
     internal readonly List<int> canTake = new();
-    internal readonly Dictionary<Game.Roster, int> takenStats = new();
-    internal KeyValuePair<Game.Roster, int> dominant = new(Game.Roster.None, 0);
+    internal readonly Dictionary<Roster, int> takenStats = new();
+    internal KeyValuePair<Roster, int> dominant = new(Roster.None, 0);
 
     internal LineInfo(Line _line)
     {

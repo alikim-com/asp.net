@@ -1,6 +1,7 @@
 ﻿
 //
 using asp_net_sql.Data;
+using asp_net_sql.GameEngine;
 using asp_net_sql.Models;
 
 //
@@ -20,5 +21,7 @@ public class ChoosePlayer_CB(TicTacToe_Context _dbContext) : PageModel
     public async Task OnGetAsync()
     {
         AsyncDbSetItems = await DbSet.ToListAsync();
+
+        Engine.SetRoster(AsyncDbSetItems);
     }
 }

@@ -16,9 +16,9 @@ internal class TurnWheel
 
     static internal int Head { get => head; }
 
-    static internal Game.Roster CurPlayer => Game.TurnList[head];
+    static internal Roster CurPlayer => Game.TurnList[head];
 
-    static bool CheckPlayerType(Game.Roster player, string type) => player.ToString().StartsWith(type);
+    static bool CheckPlayerType(Roster player, string type) => player.ToString().StartsWith(type);
     static bool CurPlayerIsHuman => CheckPlayerType(CurPlayer, "Human");
     static bool CurPlayerIsAI => CheckPlayerType(CurPlayer, "AI");
 
