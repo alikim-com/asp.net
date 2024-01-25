@@ -5,13 +5,79 @@
 @model ChoosePlayer_CB
 
 @{
-    var gameRoster = Model.AsyncDbSetItems;
+    var gameRoster = Model.AsyncDbSetItems.Where(itm => itm.Origin != "None");
 }
 
 <script type="module">
 
-    // take logic from the code
-    // class toggle to change color, console.log chosens
+    const chosen = { 
+        left: null, 
+        right: null,
+        leftOrigin: null,
+        rightOrigin: null
+    };
+
+    const ctaBtn = document.getElementById('cta');
+
+    const chosenElems = document.querySelectorAll(`[id^=chosen_]`);
+
+    const UpdateButton = str => { 
+        const btnMessages = {
+            ready_ai: "I like to watch...o_o",
+            ready_human: "Fight, Mortals!",
+            ready_mix: "For the Organics!",
+            both_missing: "Choose players",
+            left_missing: "Choose left player",
+            right_missing: "Choose right player",
+        };
+
+        ctaBtn.textContent = btnMessages[str];
+
+        ctaBtn.classList.toggle('ctaDisabled', str.includes('missing'));
+    };
+
+    const OnClick = elem => {
+
+        const idAttr = elem.id;
+        const originAttr = elem.dataset.origin;
+
+        const [_, side, id] = idAttr.split('_');
+
+        if (id == chosen[side]) return;
+
+        const [thisSide, otherSide] = side == 'left' ? ['left', 'right'] : ['right', 'left'];
+
+        chosen[thisSide] = id;
+        chosen[thisSide + 'Origin'] = originAttr.toLowerCase();
+
+        if (id == chosen[otherSide]) chosen[otherSide] = null;
+
+        if (chosen[otherSide] == null) {
+            UpdateButton(`${otherSide}_missing`);
+        } else {
+            const thisOrigin = chosen[thisSide + 'Origin'];
+            const otherOrigin = chosen[otherSide + 'Origin'];
+            if (thisOrigin == otherOrigin)
+                UpdateButton(`ready_${thisOrigin}`);
+            else
+                UpdateButton(`ready_mix`);
+        }
+    };
+
+    chosenElems.forEach(elem => {
+        elem.addEventListener('click', () => { 
+
+            OnClick(elem);
+
+            chosenElems.forEach(elem => {
+                const [_, side, id] = elem.id.split('_');
+                const on = chosen[side] == id;
+                elem.classList.toggle('on', on);
+            });
+        });
+    });
+
+    UpdateButton(`both_missing`);
 
 </script>
 
@@ -32,24 +98,22 @@
             <div class="player_info">
                 @foreach (var item in gameRoster)
                 {
-                    var origin = item.Origin;
-                    if (origin == "None") continue;
-
                     var id = item.ID;
                     var identity = item.Identity;
+                    var origin = item.Origin;
                     
                     <div>@origin</div>
                     <div> </div>
-                    <div id="chosen_left_@id">@identity</div>
+                    <div class="chosen_left" id="chosen_left_@id" data-origin="@origin">@identity</div>
 
-                    <div id="chosen_right_@id">@identity</div>
+                    <div class="chosen_right" id="chosen_right_@id" data-origin="@origin">@identity</div>
                     <div> </div>
                     <div>@origin</div>
                 }
 
             </div>
             <div class="cta center">
-                <button>For the Organics!</button>
+                <button id="cta">...</button>
             </div>
         </div>
     </div>

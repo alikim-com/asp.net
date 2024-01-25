@@ -24,7 +24,7 @@ ALTER DATABASE TicTacToe
 SET MULTI_USER;
 
 
-EXEC sp_rename 'MenuStrings', 'MenuStrings2';
+EXEC sp_rename 'MenuStrings2', 'MenuStrings';
 
 SELECT
     session_id,

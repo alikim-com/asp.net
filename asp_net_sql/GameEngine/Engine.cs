@@ -23,6 +23,10 @@ internal class Engine
 {
     public static List<ChoiceItem> roster = [];
 
+    /// <summary>
+    /// Called from Game/Index.cshtml.cs.OnGet 
+    /// after retrieving the list from the DB
+    /// </summary>
     public static void SetRoster(List<EnumGameRoster> _AsyncDbSetItems)
     {
         roster.Clear();

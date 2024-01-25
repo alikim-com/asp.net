@@ -27,9 +27,6 @@ button {
     background-color: rgba(255, 255, 255, 0.1);
     color: #999;
     padding: 3px 8px 6px 8px;
-}
-
-button:hover {
     cursor: pointer;
 }
 
@@ -115,8 +112,23 @@ button:hover {
     justify-content: center;
 }
 
-[id^="chosen_"] {
+.player_info div {
     height: 50px;
     display: flex;
     align-items: center;
+}
+
+.chosen_left.on {
+    color: #ff6a00;
+    font-weight: bold;
+}
+
+.chosen_right.on {
+    color: #ff00ff;
+    font-weight: bold;
+}
+
+.ctaDisabled {
+    pointer-events: none;
+    cursor: not-allowed;
 }
