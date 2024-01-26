@@ -41,11 +41,12 @@ internal class Engine
                 (Roster)rosterId,
                 Side.None,
                 itm.Origin,
-                itm.Identity
-                ));
+                itm.Identity,
+                itm.ID));
         }
     }
 }
+
 
 
 class ChoiceItem
@@ -57,17 +58,21 @@ class ChoiceItem
     public Side SideId { get; set; } = Side.None;
     public string OriginType { get; set; } = "";
 
+    internal int id;
+
     internal ChoiceItem(
         Roster _rosterId, 
         Side _side, 
         string _origin, 
-        string _identity)
+        string _identity,
+        int _id = 0)
     {
         chosen = false;
         RosterId = _rosterId;
         SideId = _side;
         OriginType = _origin;
         IdentityName = _identity;
+        id = _id;
     }
 
     public ChoiceItem()

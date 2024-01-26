@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace asp_net_sql.Pages.CodeBehind;
 
-public class ChoosePlayer_CB(TicTacToe_Context _dbContext) : PageModel
+public class Setup_CB(TicTacToe_Context _dbContext) : PageModel
 {
     readonly TicTacToe_Context dbContext = _dbContext;
 

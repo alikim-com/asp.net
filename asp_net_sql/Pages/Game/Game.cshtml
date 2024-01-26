@@ -1,5 +1,9 @@
 @page
 
+@using asp_net_sql.Pages.CodeBehind
+
+@model Game_CB
+
 <script type="module">
     const get = id => document.getElementById(id);
 
@@ -13,7 +17,9 @@
 
 <div class="main_container">
     <div class="header">1</div>
-    <div class="left">2</div>
+    <div class="left">
+        @await Html.PartialAsync("_InfoPartial")
+    </div>
     <div class="middle">
         <div class="aspect game_container">
             <div class="cell" id="cell_0">1</div>

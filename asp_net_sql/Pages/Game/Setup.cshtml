@@ -2,13 +2,15 @@
 
 @using asp_net_sql.Pages.CodeBehind
 
-@model ChoosePlayer_CB
+@model Setup_CB
 
 @{
     var gameRoster = Model.AsyncDbSetItems.Where(itm => itm.Origin != "None");
 }
 
 <script type="module">
+
+    const get = id => document.getElementById(id);
 
     const chosen = { 
         left: null, 
@@ -17,7 +19,9 @@
         rightOrigin: null
     };
 
-    const ctaBtn = document.getElementById('cta');
+    const ctaBtn = get('cta');
+    const chosenLeft = get('chosenLeft');
+    const chosenRight = get('chosenRight');
 
     const chosenElems = document.querySelectorAll(`[id^=chosen_]`);
 
@@ -61,6 +65,10 @@
                 UpdateButton(`ready_${thisOrigin}`);
             else
                 UpdateButton(`ready_mix`);
+            
+            // update form post fields
+            chosenLeft.value = chosen.left;
+            chosenRight.value = chosen.right;
         }
     };
 
@@ -83,7 +91,9 @@
 
 <div class="main_container">
     <div class="header">1</div>
-    <div class="left">2</div>
+    <div class="left">
+        @await Html.PartialAsync("_InfoPartial")
+    </div>
     <div class="middle">
         <div class="aspect chosen_container">
             <div class="left_player">Left Player</div>
@@ -113,7 +123,11 @@
 
             </div>
             <div class="cta center">
-                <button id="cta">...</button>
+                <form method="post">
+                    <input type="hidden" id="chosenLeft" name="chosenLeft" value="">
+                    <input type="hidden" id="chosenRight" name="chosenRight" value="">
+                    <button id="cta" formaction="./Game">...</button>
+                </form>
             </div>
         </div>
     </div>
