@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 //
 using asp_net_sql.Data;
+using System.Text.Json;
 //
 namespace asp_net_sql.Common;
 
@@ -11,7 +12,7 @@ public static class StringExtensions
         input : char.ToUpper(input[0]) + input[1..];
 }
 
-    public class Utl
+public class Utl
 {
     public static string DictToString<TKey, TValue>(
         Dictionary<TKey, TValue> dict,
@@ -29,20 +30,91 @@ public enum ResType
     Error
 }
 
-public class Result(
-    ResType _type = ResType.None,
-    Dictionary<string, List<string>>? _info = null)
+public class Result
 {
+    public ResType type;
+    public Dictionary<string, List<string>> info;
 
-    public ResType type = _type;
-    public Dictionary<string, List<string>> info = _info ?? [];
+    public Result(
+        ResType _type = ResType.None,
+        Dictionary<string, List<string>>? _info = null)
+    {
+        type = _type;
+        info = _info ?? [];
+    }
+
+    public Result(
+        ResType _type,
+        string singleKey,
+        string singleVal)
+    {
+        type = _type;
+        info = new Dictionary<string, List<string>>()
+        { { singleKey, [singleVal] } };
+    }
 
     public void AddExeptionInfo(string key, Exception ex)
     {
         type = ResType.Error;
         info[key].Add("Exception: " + ex.Message);
-        if(ex.InnerException != null)
+        if (ex.InnerException != null)
             info[key].Add("Inner exception: " + ex.InnerException.Message);
+    }
+}
+
+public class APIPacket : Result
+{
+    public Dictionary<string, string>? keyValuePairs;
+    public string? status;
+    public string? message;
+    public Guid? guid;
+
+    public APIPacket(
+    Dictionary<string, string>? _keyValuePairs = null,
+    string? _status = null,
+    string? _message = null,
+    Guid? _guid = null)
+    {
+        keyValuePairs = _keyValuePairs;
+        status = _status;
+        message = _message;
+        guid = _guid ?? Guid.NewGuid();
+    }
+
+    /// <summary>
+    /// For JsonSerializer.Deserialize
+    /// </summary>
+    public APIPacket() { }
+}
+
+class Post
+{
+    public static JsonSerializerOptions includeFields = new()
+    {
+        IncludeFields = true
+    };
+
+    public static void Context(
+            HttpRequest req,
+            string url,
+            APIPacket data,
+            out string apiEndpoint,
+            out HttpClient client,
+            out HttpContent content,
+            out string json)
+    {
+        string selfURI = req.Scheme + "://" + req.Host.ToUriComponent();
+
+        apiEndpoint = selfURI + url;
+
+        client = new();
+
+        json = JsonSerializer.Serialize(data, includeFields);
+
+        content = new StringContent(
+            json,
+            System.Text.Encoding.UTF8,
+            "application/json");
     }
 }
 

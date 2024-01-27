@@ -45,6 +45,13 @@ internal class Engine
                 itm.ID));
         }
     }
+
+    public static void Start()
+    {
+        Task.Run(EventLoop.Main.Run);
+
+        TurnWheel.GameCountdown();
+    }
 }
 
 

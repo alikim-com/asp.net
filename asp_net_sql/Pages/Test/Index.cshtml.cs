@@ -1,48 +1,25 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Text.Json;
+//
+using asp_net_sql.Common;
 
 namespace asp_net_sql.Pages.CodeBehind;
 
-public class PostData(Dictionary<string, string> _dict)
-{
-    public Dictionary<string, string> Dict { get; set; } = _dict;
-}
-
 public class APIPostTest_CB : PageModel
 {
-    static void PreparePost(
-        HttpRequest req,
-        string url,
-        PostData data,
-        out string apiEndpoint,
-        out HttpClient client,
-        out HttpContent content,
-        out string json)
-    {
-        string selfURI = req.Scheme + "://" + req.Host.ToUriComponent();
-
-        apiEndpoint = selfURI + url;
-
-        client = new();
-
-        json = JsonSerializer.Serialize(data);
-
-        content = new StringContent(
-            json,
-            System.Text.Encoding.UTF8,
-            "application/json");
-    }
-
     public async Task OnGetAsync()
     {
-        PreparePost(
+        Post.Context(
             Request,
             "/API/Index",
-            new PostData(new() {
+            new APIPacket(new() {
                 { "key1", "value1" },
                 { "key2", "value2" }
-            }),
+            },
+            "status",
+            "message"
+            ),
             out string apiEndpoint,
             out HttpClient client,
             out HttpContent content,
@@ -57,6 +34,9 @@ public class APIPostTest_CB : PageModel
         {
             string responseBody = await 
                 response.Content.ReadAsStringAsync();
+
+            // FINISH PARSING AND PRINT
+            // //(APIPacket and Result -> .ToString)
 
             ViewData["responseBody"] = responseBody;
 

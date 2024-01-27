@@ -1,5 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Text.Json;
+//
+using asp_net_sql.Common;
 
 namespace asp_net_sql.Pages.CodeBehind;
 
@@ -13,18 +16,32 @@ public class API_CB : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
-        await Task.Delay(0);
+        using var reader = new StreamReader(Request.Body);
 
-        var responseData = new { 
-            Message = "Operation successful" 
-        };
-        return new OkObjectResult(responseData)
+        string reqBody = await reader.ReadToEndAsync();
+
+        var resp = new APIPacket();
+
+        try
         {
-            StatusCode = 201
+            var postData = JsonSerializer.Deserialize<APIPacket>
+                (reqBody, Post.includeFields);
+            resp.status = "success";
+            resp.message = "";
+            // test
+            resp.keyValuePairs = postData?.keyValuePairs;
+        }
+        catch (Exception ex)
+        {
+            resp.status = "error";
+            resp.message = "exception";
+            resp.info["info"] = [];
+            resp.AddExeptionInfo("info", ex);
+        }
+
+        return new JsonResult(resp, Post.includeFields)
+        {
+            StatusCode = 200
         };
-
-        // var responseData = new { Message = "Operation successful" };
-        // return new JsonResult(responseData);
     }
-
 }

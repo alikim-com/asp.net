@@ -38,10 +38,6 @@ public class Program
 
         app.MapRazorPages();
 
-        //Task.Run(EventLoop.Main.Run);
-        
-        //TurnWheel.GameCountdown();
-
         app.Run();
     }
 }

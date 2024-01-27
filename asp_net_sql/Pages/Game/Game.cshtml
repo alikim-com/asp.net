@@ -19,6 +19,7 @@
     <div class="header">1</div>
     <div class="left">
         @await Html.PartialAsync("_InfoPartial")
+        <div id="APILog"><>
     </div>
     <div class="middle">
         <div class="aspect game_container">
@@ -36,3 +37,29 @@
     <div class="right">4</div>
     <div class="footer">5</div>
 </div>
+
+<script type="module">
+
+    // promise wrapper for XMLHttpRequest
+    import { makeRequest } from '/js/network.js'
+
+    const get = id => document.getElementById(id);
+
+    const APILog = get('APILog');
+
+    const url = '@ViewData["baseURI"]';
+
+    const POST_API = (data, endpoint = '/API/Index') => {
+
+        const jsonData = JSON.stringify(data);
+
+        makeRequest(url + endpoint, '', 'POST', 0, null, jsonData)
+            .then(res => { console.log(res) })
+            .catch(err => { console.error(err) });
+    };
+
+    window.addEventListener('load', () => { 
+        POST_API({ command: 'StartEngine' });
+    });
+
+</script>

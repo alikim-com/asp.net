@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Primitives;
+using System.Collections.Generic;
 
 namespace asp_net_sql.Pages.CodeBehind;
 
@@ -21,10 +22,24 @@ public class Game_CB(TicTacToe_Context _dbContext) : PageModel
     {
         await Task.Delay(0);
     }
+
+    PageResult PageWithData(
+        Result result,
+        HttpRequest req)
+    {
+        string baseURI = req.Scheme + "://" + req.Host.ToUriComponent();
+
+        ViewData["Result"] = result;
+        ViewData["baseURI"] = baseURI;
+
+        return Page();
+    }
+
     public async Task<IActionResult> OnPostAsync()
     {
         var caller = "Game_CB.OnPostAsync";
         var formData = Request.Form.ToDictionary();
+
         if (!int.TryParse(
             Utils.SafeDictValue(formData, "chosenLeft", caller),
             out int chosenLeft)) throw new Exception($"{caller} : error parsing chosenLeft");
@@ -34,29 +49,19 @@ public class Game_CB(TicTacToe_Context _dbContext) : PageModel
 
         if (Engine.roster.FirstOrDefault
             (itm => itm.id == chosenLeft || itm.id == chosenRight) == null)
-        {
-            ViewData["Result"] = new Result(
-                ResType.Error,
-                new Dictionary<string, List<string>>() { { caller, ["id(s) not found"] } });
-            return Page();
-        }
+            return PageWithData(
+                new Result(ResType.Error, caller, "id(s) not found"),
+                Request);
 
         if (chosenLeft == chosenRight)
-        {
-            ViewData["Result"] = new Result(
-                ResType.Error,
-                new Dictionary<string, List<string>>() { { caller, ["bad ids"] } });
-            return Page();
-        }
-
-        ViewData["Result"] = new Result(
-            ResType.OK,
-            new Dictionary<string, List<string>>() { { caller, ["ready"] } });
-
-        // start engine in a diff thread - task.run()?
-        // loading assets
+            return PageWithData(
+                new Result(ResType.Error, caller, "bad ids"),
+                Request);
 
         await Task.Delay(0);
-        return Page();
+
+        return PageWithData(
+            new Result(ResType.OK, caller, "ready"),
+            Request);
     }
 }
