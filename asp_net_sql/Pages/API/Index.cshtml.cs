@@ -26,9 +26,11 @@ public class API_CB : PageModel
         {
             var postData = JsonSerializer.Deserialize<APIPacket>
                 (reqBody, Post.includeFields);
-            resp.status = "success";
-            resp.message = "";
+
             // test
+            resp.status = "success";
+            resp.message = "received packet";
+            resp.command = postData?.command;
             resp.keyValuePairs = postData?.keyValuePairs;
         }
         catch (Exception ex)

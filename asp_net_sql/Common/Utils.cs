@@ -60,6 +60,26 @@ public class Result
         if (ex.InnerException != null)
             info[key].Add("Inner exception: " + ex.InnerException.Message);
     }
+
+    public override string ToString()
+    {
+        string outp = $"type:\n\t{type}\ninfo:\n";
+
+        foreach(var (k,lst) in info)
+        {
+            outp += $"\t[{k}]\n";
+            foreach(var val in lst) outp += $"\t\t{val}\n";
+        }
+
+        return outp;
+    }
+}
+
+public enum APICmd
+{
+    None,
+    StartEngine,
+    StopEngine
 }
 
 public class APIPacket : Result
@@ -67,17 +87,20 @@ public class APIPacket : Result
     public Dictionary<string, string>? keyValuePairs;
     public string? status;
     public string? message;
+    public APICmd? command;
     public Guid? guid;
 
     public APIPacket(
-    Dictionary<string, string>? _keyValuePairs = null,
-    string? _status = null,
-    string? _message = null,
-    Guid? _guid = null)
+        Dictionary<string, string>? _keyValuePairs = null,
+        string? _status = null,
+        string? _message = null,
+        APICmd _command = APICmd.None,
+        Guid? _guid = null)
     {
         keyValuePairs = _keyValuePairs;
         status = _status;
         message = _message;
+        command = _command;
         guid = _guid ?? Guid.NewGuid();
     }
 
@@ -85,6 +108,29 @@ public class APIPacket : Result
     /// For JsonSerializer.Deserialize
     /// </summary>
     public APIPacket() { }
+
+    public override string ToString()
+    {
+        string outp = $"""
+            guid:
+                {guid}
+            command:
+                {command}
+            status:
+                {status}
+            message:
+                {message}
+
+            """;
+
+        outp += "pairs:\n";
+        if (keyValuePairs != null)
+            foreach (var (k, v) in keyValuePairs) outp += $"\t{k}: {v}\n";
+        
+        outp += "result->\n" + base.ToString();
+
+        return outp;
+    }
 }
 
 class Post

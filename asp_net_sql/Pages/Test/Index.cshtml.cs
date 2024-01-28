@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Text.Json;
+//
+using System.Diagnostics;
 //
 using asp_net_sql.Common;
+using System.Text.Json;
 
 namespace asp_net_sql.Pages.CodeBehind;
 
@@ -10,41 +12,55 @@ public class APIPostTest_CB : PageModel
 {
     public async Task OnGetAsync()
     {
-        Post.Context(
-            Request,
-            "/API/Index",
-            new APIPacket(new() {
+        var packet = new APIPacket(
+            new() {
                 { "key1", "value1" },
                 { "key2", "value2" }
             },
             "status",
-            "message"
-            ),
+            "message",
+            APICmd.StartEngine
+            );
+
+        //Debug.WriteLine(packet);
+
+        Post.Context(
+            Request,
+            "/API/Index",
+            packet,
             out string apiEndpoint,
             out HttpClient client,
             out HttpContent content,
             out string json);
 
+        ViewData["Sent json"] = json;
+        ViewData["Sent packet"] = packet.ToString();
+
         HttpResponseMessage response = await 
             client.PostAsync(apiEndpoint, content);
 
-        ViewData["json"] = json;
+        ViewData["Response body"] = "";
+        ViewData["Response packet"] = "";
 
         if (response.IsSuccessStatusCode)
         {
-            string responseBody = await 
-                response.Content.ReadAsStringAsync();
+            string responseBody = await
+            response.Content.ReadAsStringAsync();
 
-            // FINISH PARSING AND PRINT
-            // //(APIPacket and Result -> .ToString)
+            ViewData["Response body"] = responseBody;
 
-            ViewData["responseBody"] = responseBody;
+            if (responseBody != null)
+            {
+                APIPacket? resp = JsonSerializer.Deserialize<APIPacket>
+                    (responseBody, Post.includeFields);
 
+                if(resp != null)
+                ViewData["Response packet"] = resp.ToString();
+            }
         }
         
-        ViewData["StatusCode"] = response.StatusCode;
-
-        ViewData["ReasonPhrase"] = response.ReasonPhrase;
+        ViewData["Response status code"] = response.StatusCode;
+        ViewData["Response reason phrase"] = response.ReasonPhrase;
     }
 
     public async Task<IActionResult> OnPostAsync()

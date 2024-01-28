@@ -6,21 +6,19 @@
 
 @{
     ViewData["Title"] = "API Post Test";
+
+    string[] keys = [
+        "Sent json",
+        "Sent packet",
+        "Response status code",
+        "Response Reason phrase",
+        "Response body",
+        "Response packet"];
+
+    foreach(var k in keys)
+    {
+        <h5>@k</h5>
+        <h6><pre>@ViewData[@k]</pre></h6>
+    }
+
 }
-
-<h1>API_Post</h1>
-
-<h2>Sent</h2>
-<div>_@ViewData["json"]_</div>
-
-<h2>Response</h2>
-<div>_@ViewData["responseBody"]_</div>
-
-<h2>StatusCode</h2>
-@{
-    var code = (int)(ViewData["StatusCode"] ?? "-1");
-}
-<div>@ViewData["StatusCode"] (@code)</div>
-
-<h2>ReasonPhrase</h2>
-<div>@ViewData["ReasonPhrase"]</div>
