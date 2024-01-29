@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using System.Net.WebSockets;
 //
 using asp_net_sql.Data;
-using asp_net_sql.GameEngine;
+using asp_net_sql.Common;
 
 namespace asp_net_sql;
 
@@ -37,6 +38,33 @@ public class Program
         app.UseAuthorization();
 
         app.MapRazorPages();
+
+        // websocket endpoint
+
+        var webSocketOptions = new WebSocketOptions
+        {
+            KeepAliveInterval = TimeSpan.FromMinutes(2)
+        };
+
+        app.UseWebSockets(webSocketOptions);
+
+        app.Map("/ws", builder =>
+        {
+            builder.Run(async (context) =>
+            {
+                if (context.WebSockets.IsWebSocketRequest)
+                {
+                    WebSocket socket = await context.WebSockets.AcceptWebSocketAsync();
+                    await WebSock.SocketLoop(socket, context);
+                } else
+                {
+                    context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                    context.Response.Headers.Append("Voicemail", "Thank you for reaching out to us. Unfortunately, we only serve websocket clients at this address.");
+                }
+            });
+        });
+
+        //
 
         app.Run();
     }
