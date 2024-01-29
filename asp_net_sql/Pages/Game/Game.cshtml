@@ -1,6 +1,7 @@
 @page
 
 @using asp_net_sql.Pages.CodeBehind
+@using asp_net_sql.Common;
 
 @model Game_CB
 
@@ -19,7 +20,7 @@
     <div class="header">1</div>
     <div class="left">
         @await Html.PartialAsync("_InfoPartial")
-        <div id="APILog"><>
+        <div id="APILog"></div>
     </div>
     <div class="middle">
         <div class="aspect game_container">
@@ -43,23 +44,52 @@
     // promise wrapper for XMLHttpRequest
     import { makeRequest } from '/js/network.js'
 
+    const log = console.log;
+    const err = console.error;
     const get = id => document.getElementById(id);
 
     const APILog = get('APILog');
 
     const url = '@ViewData["baseURI"]';
 
+    const enmAPICmd = {
+        @Html.Raw(APICmd.None.TypeToString())
+    };
+
+    const enmResType = {
+        @Html.Raw(ResType.None.TypeToString())
+    };
+
+    const getEnumNameByVal =
+        (enm, v) => Object.keys(enm).find(k => enm[k] == v);
+
     const POST_API = (data, endpoint = '/API/Index') => {
 
         const jsonData = JSON.stringify(data);
 
+        log(`Sent json: ${jsonData}`);
+
         makeRequest(url + endpoint, '', 'POST', 0, null, jsonData)
-            .then(res => { console.log(res) })
-            .catch(err => { console.error(err) });
+            .then(res => { 
+                log(`Received:\nind: ${res.ind}\ndata: ${res.data}`);
+                const packet = JSON.parse(res.data);
+                packet.commandEnum = getEnumNameByVal(enmAPICmd, packet.command);
+                packet.typeEnum = getEnumNameByVal(enmResType, packet.type);
+                log(packet);
+            })
+            .catch(e => { err('Received error: ' + e) });
     };
 
     window.addEventListener('load', () => { 
-        POST_API({ command: 'StartEngine' });
+        POST_API({
+            keyValuePairs: {
+                key1: 'value1',
+                key2: 'value2'
+            },
+            status: 'status',
+            message: 'message',
+            command: enmAPICmd.Test
+        });
     });
 
 </script>

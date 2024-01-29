@@ -6,10 +6,33 @@ using System.Text.Json;
 //
 namespace asp_net_sql.Common;
 
+public static class G
+{
+    public static readonly string NL = Environment.NewLine;
+}
+
 public static class StringExtensions
 {
     public static string Capitalise(this string input) => string.IsNullOrEmpty(input) ?
         input : char.ToUpper(input[0]) + input[1..];
+}
+
+public static class EnumExtensions
+{
+    public static string TypeToString(this Enum enm)
+    {
+        var outp = "";
+
+        var enmType = enm.GetType();
+
+        foreach (var val in Enum.GetValues(enmType))
+        {
+            var name = Enum.GetName(enmType, val);
+            outp += $"{name}: {(int)val},\n";
+        }
+
+        return outp;
+    }
 }
 
 public class Utl
@@ -78,6 +101,7 @@ public class Result
 public enum APICmd
 {
     None,
+    Test,
     StartEngine,
     StopEngine
 }

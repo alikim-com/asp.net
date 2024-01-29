@@ -19,7 +19,7 @@ public class APIPostTest_CB : PageModel
             },
             "status",
             "message",
-            APICmd.StartEngine
+            APICmd.Test
             );
 
         //Debug.WriteLine(packet);

@@ -25,13 +25,23 @@ public class API_CB : PageModel
         try
         {
             var postData = JsonSerializer.Deserialize<APIPacket>
-                (reqBody, Post.includeFields);
+                (reqBody, Post.includeFields) ?? throw new Exception
+                    ($"API.OnPostAsync : postData is null");
 
-            // test
-            resp.status = "success";
-            resp.message = "received packet";
-            resp.command = postData?.command;
-            resp.keyValuePairs = postData?.keyValuePairs;
+            switch(postData.command)
+            {
+                case APICmd.Test:
+                    resp.status = "success";
+                    resp.message = "received packet";
+                    resp.command = postData.command;
+                    resp.keyValuePairs = postData.keyValuePairs;
+                    break;
+
+                default:
+                    break;
+            }
+
+            
         }
         catch (Exception ex)
         {
