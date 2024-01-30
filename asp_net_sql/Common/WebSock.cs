@@ -18,9 +18,10 @@ public class WebSock
             if (res.MessageType == WebSocketMessageType.Text)
             {
                 var message = Encoding.UTF8.GetString(buffer, 0, res.Count);
-
+                // json.encode into APIPacket
             }
 
+            // APIPAcket to buffer
             await socket.SendAsync(
                 new ArraySegment<byte>(buffer, 0, res.Count),
                 res.MessageType,

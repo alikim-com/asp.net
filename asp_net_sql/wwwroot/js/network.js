@@ -1,3 +1,39 @@
+const webSocket = (
+	scheme,
+	host,
+	port,
+	path,
+	onOpen = null,
+	onMessage = null,
+	onError = null,
+	onClose = null
+) => { // ws://localhost:8080
+
+	const log = console.log;
+
+	const url = `${scheme}://${host}:${port}/${path}`;
+
+	const socket = new WebSocket(url);
+
+	const pref = `<${url}> websocket`;
+
+	socket.addEventListener('open', onOpen ??
+		(evt => { log(`${pref} open`) }));
+
+	socket.addEventListener('message', onMessage ??
+		(evt => { log(`${pref} message`); log(evt.data) }));
+
+	socket.addEventListener('error', onError ??
+		(evt => { log(`${pref} closed due to an error`); log(evt) }));
+
+	socket.addEventListener('close', onClose ??
+		(evt => {
+			log(`${pref} closed (clean ${evt.wasClean})\n\tcode: ${evt.code}\n\treason: ${evt.reason}`)
+		}));
+
+	return socket;
+};
+
 const makeRequest = (url, ind = '', method = 'GET', delay = 0, headers = null, data = '') => {
 	return new Promise(function (resolve, reject) {
 		const xhr = new XMLHttpRequest();
@@ -97,4 +133,4 @@ const loadAssets = (async_prom, toload) => {
       .catch(err => { async_prom.reject?.({ src: 'loadAssets()', err }) });
 };
 
-export { makeRequest, loadAssets }
+export { makeRequest, loadAssets, webSocket }

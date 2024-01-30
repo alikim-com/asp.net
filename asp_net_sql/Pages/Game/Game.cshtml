@@ -24,15 +24,22 @@
     </div>
     <div class="middle">
         <div class="aspect game_container">
-            <div class="cell" id="cell_0">1</div>
-            <div class="cell" id="cell_1">2</div>
-            <div class="cell" id="cell_2">3</div>
-            <div class="cell" id="cell_3">4</div>
-            <div class="cell" id="cell_4">5</div>
-            <div class="cell" id="cell_5">6</div>
-            <div class="cell" id="cell_6">7</div>
-            <div class="cell" id="cell_7">8</div>
-            <div class="cell" id="cell_8">9</div>
+            <div class="cell center" id="cell_0">1</div>
+            <div class="cell center" id="cell_1">2</div>
+            <div class="cell center" id="cell_2">3</div>
+            <div class="cell center" id="cell_3">4</div>
+            <div class="cell center" id="cell_4">5</div>
+            <div class="cell center" id="cell_5">6</div>
+            <div class="cell center" id="cell_6">7</div>
+            <div class="cell center" id="cell_7">8</div>
+            <div class="cell center" id="cell_8">9</div>
+
+            <div class="info center" id="info">info</div>
+
+            <div class="vs center" id="vs">
+                <button id="post">send post</button>
+                <button id="websock">send websocket</button>
+            </div>
         </div>
     </div>
     <div class="right">4</div>
@@ -42,7 +49,7 @@
 <script type="module">
 
     // promise wrapper for XMLHttpRequest
-    import { makeRequest } from '/js/network.js'
+    import { makeRequest, webSocket } from '/js/network.js'
 
     const log = console.log;
     const err = console.error;
@@ -63,6 +70,14 @@
     const getEnumNameByVal =
         (enm, v) => Object.keys(enm).find(k => enm[k] == v);
 
+
+    const APIPacket = (keyValuePairs, status, message, command) => ({
+        keyValuePairs,
+        status,
+        message,
+        command
+    });
+
     const POST_API = (data, endpoint = '/API/Index') => {
 
         const jsonData = JSON.stringify(data);
@@ -80,19 +95,40 @@
             .catch(e => { err('Received error: ' + e) });
     };
 
-    // MAKE ROOM FOR PAGE BOTTOM
-    // MAKE BUTTONS FOR POST & WS
+    const SEND_WEBSOCK = (data) => {
 
-    window.addEventListener('load', () => { 
-        POST_API({
-            keyValuePairs: {
-                key1: 'value1',
-                key2: 'value2'
-            },
-            status: 'status',
-            message: 'message',
-            command: enmAPICmd.Test
-        });
+        const jsonData = JSON.stringify(data);
+
+        log(`Sent json: ${jsonData}`);
+
+        websock.send(jsonData);
+    };
+
+    const btnPost = get('post');
+    const btnWebsock = get('websock');
+
+    const packet = APIPacket(
+        {
+            key1: 'value1',
+            key2: 'value2'
+        },
+        'status',
+        'message',
+        enmAPICmd.Test
+    );
+
+    log('packet created:');
+    log(packet);
+
+    btnPost.addEventListener('click', () => { 
+        POST_API(packet) 
+    });
+
+    // WINDOW ONLOAD
+    const websock = webSocket('wss', 'localhost', '7170', 'ws');
+
+    btnWebsock.addEventListener('click', () => {
+        SEND_WEBSOCK(packet)
     });
 
 </script>

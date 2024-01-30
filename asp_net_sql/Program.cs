@@ -54,6 +54,8 @@ public class Program
             {
                 if (context.WebSockets.IsWebSocketRequest)
                 {
+
+                    // check if opens once
                     WebSocket socket = await context.WebSockets.AcceptWebSocketAsync();
                     await WebSock.SocketLoop(socket, context);
                 } else
