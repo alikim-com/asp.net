@@ -70,13 +70,19 @@
     const getEnumNameByVal =
         (enm, v) => Object.keys(enm).find(k => enm[k] == v);
 
-
     const APIPacket = (keyValuePairs, status, message, command) => ({
         keyValuePairs,
         status,
         message,
         command
     });
+
+    const JsonToPacket = json => { 
+        const packet = JSON.parse(json);
+        packet.commandEnum = getEnumNameByVal(enmAPICmd, packet.command);
+        packet.typeEnum = getEnumNameByVal(enmResType, packet.type);
+        return packet;
+    };
 
     const POST_API = (data, endpoint = '/API/Index') => {
 
@@ -87,26 +93,46 @@
         makeRequest(url + endpoint, '', 'POST', 0, null, jsonData)
             .then(res => { 
                 log(`Received:\nind: ${res.ind}\ndata: ${res.data}`);
-                const packet = JSON.parse(res.data);
-                packet.commandEnum = getEnumNameByVal(enmAPICmd, packet.command);
-                packet.typeEnum = getEnumNameByVal(enmResType, packet.type);
+                const packet = JsonToPacket(res.data);
                 log(packet);
             })
             .catch(e => { err('Received error: ' + e) });
     };
 
-    const SEND_WEBSOCK = (data) => {
+    const SEND_WEBSOCK = data => {
 
         const jsonData = JSON.stringify(data);
 
         log(`Sent json: ${jsonData}`);
 
-        websock.send(jsonData);
+        _websock.send(jsonData);
     };
+
+    const loadAssets = async () => { 
+        await new Promise((res, rej) => { setTimeout(res, 2000) });
+    };
+
+    const onWsMessage = evt => { 
+        const packet = JsonToPacket(evt.data);
+        log(packet);
+    };
+
+    // CHECK MIDDLEWARE PERSIST
+    // REWRITE CONSTRUCTOR FUNCTION
+    let _websock; // test
+    const start = () => {
+        const websock = webSocket(
+            'wss', 'localhost', '7170', 'ws',
+            null,
+            onWsMessage
+        );
+        _websock = websock;
+    };
+
+    // test
 
     const btnPost = get('post');
     const btnWebsock = get('websock');
-
     const packet = APIPacket(
         {
             key1: 'value1',
@@ -116,19 +142,20 @@
         'message',
         enmAPICmd.Test
     );
-
     log('packet created:');
     log(packet);
-
     btnPost.addEventListener('click', () => { 
         POST_API(packet) 
     });
-
-    // WINDOW ONLOAD
-    const websock = webSocket('wss', 'localhost', '7170', 'ws');
-
     btnWebsock.addEventListener('click', () => {
         SEND_WEBSOCK(packet)
+    });
+
+    //
+
+    window.addEventListener('load', async () => { 
+        await loadAssets();
+        start();
     });
 
 </script>

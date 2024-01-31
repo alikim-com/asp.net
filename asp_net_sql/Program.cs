@@ -54,10 +54,10 @@ public class Program
             {
                 if (context.WebSockets.IsWebSocketRequest)
                 {
-
-                    // check if opens once
                     WebSocket socket = await context.WebSockets.AcceptWebSocketAsync();
-                    await WebSock.SocketLoop(socket, context);
+                    var webSock = new WebSock(socket, 1024 * 4);
+
+                    await webSock.SocketLoop(socket, context);
                 } else
                 {
                     context.Response.StatusCode = StatusCodes.Status400BadRequest;
