@@ -18,7 +18,7 @@ const webSocket = (
 	const pref = `<${url}> websocket`;
 
 	socket.addEventListener('open', onOpen ??
-		(evt => { log(`${pref} open`) }));
+		(evt => { log(`${pref} open`); log(socket) }));
 
 	socket.addEventListener('message', onMessage ??
 		(evt => { log(`${pref} message`); log(evt.data) }));

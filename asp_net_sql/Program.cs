@@ -48,22 +48,24 @@ public class Program
 
         app.UseWebSockets(webSocketOptions);
 
-        app.Map("/ws", builder =>
-        {
-            builder.Run(async (context) =>
-            {
-                if (context.WebSockets.IsWebSocketRequest)
-                {
-                    WebSocket socket = await context.WebSockets.AcceptWebSocketAsync();
-                    var webSock = new WebSock(socket, 1024 * 4);
+        app.Map("/ws", async context => {
 
-                    await webSock.SocketLoop(socket, context);
-                } else
-                {
-                    context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                    context.Response.Headers.Append("Voicemail", "Thank you for reaching out to us. Unfortunately, we only serve websocket clients at this address.");
-                }
-            });
+            if (context.WebSockets.IsWebSocketRequest)
+            {
+                var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+
+                var tcs = new TaskCompletionSource<object>();
+
+                WebSockHub.Add(webSocket, tcs);
+
+                await tcs.Task;
+
+            } else
+            {
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                context.Response.Headers.Append("Voicemail", "Thank you for reaching out to us. Unfortunately, we only serve websocket clients at this address.");
+            }
+
         });
 
         //

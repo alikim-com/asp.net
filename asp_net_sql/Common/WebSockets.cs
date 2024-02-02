@@ -1,12 +1,31 @@
-﻿using System.Net.WebSockets;
+﻿
+using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-
+//
+using TCS = System.Threading.Tasks.TaskCompletionSource<object>;
+//
 namespace asp_net_sql.Common;
 
-public class WebSock(WebSocket _socket, int bufferSize)
+public class WebSockHub
+{
+    static public readonly List<WebSockRunner> wsRunners = [];
+
+    public static void Add(WebSocket _webSocket, TCS _tcs)
+    {
+        var rnr = new WebSockRunner(_webSocket, _tcs);
+        wsRunners.Add(rnr);
+        rnr.OpenLoop();
+    }
+}
+
+public class WebSockRunner(
+    WebSocket _socket,
+    TCS _tcs,
+    int bufferSize = 4 * 1024)
 {
     readonly WebSocket socket = _socket;
+    readonly TCS tcs = _tcs;
     readonly byte[] buffer = new byte[bufferSize];
 
     async Task Send(APIPacket packet)
@@ -22,7 +41,7 @@ public class WebSock(WebSocket _socket, int bufferSize)
             CancellationToken.None);
     }
 
-    public async Task SocketLoop(WebSocket _socket, HttpContext context)
+    public async void OpenLoop()
     {
         
         WebSocketReceiveResult res;
@@ -77,5 +96,10 @@ public class WebSock(WebSocket _socket, int bufferSize)
             res.CloseStatus.Value,
             res.CloseStatusDescription,
             CancellationToken.None);
+
+        WebSockHub.wsRunners.Remove(this);
+
+        // release middleware
+        tcs.SetResult(new { });
     }
 }
