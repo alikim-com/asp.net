@@ -13,22 +13,51 @@ public class WebSockHub
 
     public static void Add(WebSocket _webSocket, TCS _tcs)
     {
-        var rnr = new WebSockRunner(_webSocket, _tcs);
+        var _guid = Guid.NewGuid();
+        var rnr = new WebSockRunner(_webSocket, _tcs, _guid);
         wsRunners.Add(rnr);
         rnr.OpenLoop();
+        UpdateRunners();
+    }
+
+    public static void Remove(WebSockRunner wsRunner)
+    {
+        wsRunners.Remove(wsRunner);
+        UpdateRunners();
+    }
+
+    static void UpdateRunners()
+    {
+        Dictionary<string, string> dict = [];
+        foreach (var rnr in wsRunners)
+            dict.Add(rnr.name, rnr.Tcs.Task.Status.ToString());
+
+        var packet = new Packet(
+                dict,
+                "wsRunners",
+                PackStat.None,
+                PackCmd.Update);
+
+        foreach (var rnr in wsRunners) 
+            rnr.SendUpdate(packet);
     }
 }
 
 public class WebSockRunner(
     WebSocket _socket,
     TCS _tcs,
+    Guid _guid,
     int bufferSize = 4 * 1024)
 {
     readonly WebSocket socket = _socket;
-    readonly TCS tcs = _tcs;
+    public TCS Tcs { get; } = _tcs;
+    Guid guid = _guid;
+    public readonly string name = _guid.ToString()[..4];
     readonly byte[] buffer = new byte[bufferSize];
 
-    async Task Send(APIPacket packet)
+    public void SendUpdate(Packet packet) => Send(packet);
+
+    async void Send(Packet packet)
     {
         var json = JsonSerializer.Serialize(packet, Post.includeFields);
 
@@ -43,9 +72,9 @@ public class WebSockRunner(
 
     public async void OpenLoop()
     {
-        
+
         WebSocketReceiveResult res;
-        APIPacket resp;
+        Packet resp;
 
         do
         {
@@ -56,19 +85,19 @@ public class WebSockRunner(
             {
                 var json = Encoding.UTF8.GetString(buffer, 0, res.Count);
 
-                resp = new APIPacket();
+                resp = new Packet();
 
                 try
                 {
-                    var wsData = JsonSerializer.Deserialize<APIPacket>
+                    var wsData = JsonSerializer.Deserialize<Packet>
                         (json, Post.includeFields) ?? throw new Exception
                             ($"WebSock.OnReceiveAsync : wsData is null");
 
                     switch (wsData.command)
                     {
-                        case APICmd.Test:
-                            resp.status = "success";
-                            resp.message = "received packet";
+                        case PackCmd.Test:
+                            resp.status = PackStat.Success;
+                            resp.message = "bouncing back packet";
                             resp.command = wsData.command;
                             resp.keyValuePairs = wsData.keyValuePairs;
                             break;
@@ -79,16 +108,14 @@ public class WebSockRunner(
                 }
                 catch (Exception ex)
                 {
-                    resp.status = "error";
+                    resp.status = PackStat.Fail;
                     resp.message = "exception";
                     resp.info["info"] = [];
                     resp.AddExeptionInfo("info", ex);
                 }
 
-                await Send(resp);
+                Send(resp);
             }
-
-            
 
         } while (!res.CloseStatus.HasValue);
 
@@ -97,9 +124,9 @@ public class WebSockRunner(
             res.CloseStatusDescription,
             CancellationToken.None);
 
-        WebSockHub.wsRunners.Remove(this);
+        WebSockHub.Remove(this);
 
         // release middleware
-        tcs.SetResult(new { });
+        Tcs.SetResult(new { });
     }
 }

@@ -20,7 +20,7 @@
     <div class="header">1</div>
     <div class="left">
         @await Html.PartialAsync("_InfoPartial")
-        <div id="APILog"></div>
+        <div id="LeftLog"></div>
     </div>
     <div class="middle">
         <div class="aspect game_container">
@@ -38,11 +38,15 @@
 
             <div class="vs center" id="vs">
                 <button id="post">send post</button>
-                <button id="websock">send websocket</button>
+                <button id="wsopen">ws open</button>
+                <button id="wssend">ws send</button>
+                <button id="wsclose">ws close</button>
             </div>
         </div>
     </div>
-    <div class="right">4</div>
+    <div class="right">
+        <div id="RightLog"></div>
+    </div>
     <div class="footer">5</div>
 </div>
 
@@ -55,12 +59,20 @@
     const err = console.error;
     const get = id => document.getElementById(id);
 
-    const APILog = get('APILog');
+    const getHTML = () => {
+        const html = {};
+        document.querySelectorAll('*[id]').forEach(e => html[e.id] = e);
+        return html;
+    };
 
     const url = '@ViewData["baseURI"]';
 
-    const enmAPICmd = {
-        @Html.Raw(APICmd.None.TypeToString())
+    const enmPackStat = {
+        @Html.Raw(PackStat.None.TypeToString())
+    };
+
+    const enmPackCmd = {
+        @Html.Raw(PackCmd.None.TypeToString())
     };
 
     const enmResType = {
@@ -70,21 +82,22 @@
     const getEnumNameByVal =
         (enm, v) => Object.keys(enm).find(k => enm[k] == v);
 
-    const APIPacket = (keyValuePairs, status, message, command) => ({
+    const Packet = (keyValuePairs, status, message, command) => ({
         keyValuePairs,
-        status,
         message,
+        status,
         command
     });
 
     const JsonToPacket = json => { 
         const packet = JSON.parse(json);
-        packet.commandEnum = getEnumNameByVal(enmAPICmd, packet.command);
+        packet.commandEnum = getEnumNameByVal(enmPackCmd, packet.command);
+        packet.statusEnum = getEnumNameByVal(enmPackStat, packet.status);
         packet.typeEnum = getEnumNameByVal(enmResType, packet.type);
         return packet;
     };
 
-    const POST_API = (data, endpoint = '/API/Index') => {
+    const postToAPI = (data, endpoint = '/API/Index') => {
 
         const jsonData = JSON.stringify(data);
 
@@ -99,63 +112,108 @@
             .catch(e => { err('Received error: ' + e) });
     };
 
-    const SEND_WEBSOCK = data => {
+    function WSRunner() 
+    { 
+        this.open = obj => {
 
-        const jsonData = JSON.stringify(data);
+            if (this.socket) {
+                log("socket already exists");
+                return;
+            }
 
-        log(`Sent json: ${jsonData}`);
+            this.socket = webSocket(
+                obj.scheme,
+                obj.host,
+                obj.port,
+                obj.path,
+                obj.onOpen = null,
+                obj.onMessage = null,
+                obj.onError = null,
+                obj.onClose = null,
+            );
+        };
 
-        _websock.send(jsonData);
-    };
+        this.send = data => { 
 
-    const loadAssets = async () => { 
-        await new Promise((res, rej) => { setTimeout(res, 2000) });
-    };
+            const jsonData = JSON.stringify(data);
 
-    const onWsMessage = evt => { 
-        const packet = JsonToPacket(evt.data);
-        log(packet);
-    };
+            log(`Sent json: ${jsonData}`);
 
-    // CHECK MIDDLEWARE PERSIST
-    // REWRITE CONSTRUCTOR FUNCTION
-    let _websock; // test
-    const start = () => {
-        const websock = webSocket(
-            'wss', 'localhost', '7170', 'ws',
-            null,
-            onWsMessage
-        );
-        _websock = websock;
-    };
+            this.socket.send(jsonData);
+        };
 
-    // test
+        this.close = () => { 
+            this.socket.close(); // CHECK PARAMS
+            this.socket = null;
+        };
 
-    const btnPost = get('post');
-    const btnWebsock = get('websock');
-    const packet = APIPacket(
+    }
+
+    const html = getHTML();
+
+    const wsBtn = [html.wsopen, html.wssend, html.wsclose];
+
+    // test packet
+
+    const packet = Packet(
         {
             key1: 'value1',
             key2: 'value2'
         },
-        'status',
-        'message',
-        enmAPICmd.Test
+        enmPackStat.None,
+        'test message',
+        enmPackCmd.Test
     );
+
     log('packet created:');
     log(packet);
-    btnPost.addEventListener('click', () => { 
-        POST_API(packet) 
-    });
-    btnWebsock.addEventListener('click', () => {
-        SEND_WEBSOCK(packet)
+
+    // websocket wrapper
+
+    const wsRunner = new WSRunner();
+
+    const onWsMessage = evt => {
+        const packet = JsonToPacket(evt.data); // , PRINT SOCK NAME
+        log(packet);
+    };
+
+    html.wsopen.addEventListener('click', () => { 
+        wsRunner.open({
+            scheme: 'wss',
+            host: 'localhost',
+            port: '7170',
+            path: 'ws',
+            onMessage: onWsMessage,
+        });
     });
 
-    //
+    html.wssend.addEventListener('click', () => {
+        wsRunner.send(packet)
+    });
+
+    html.wsclose.addEventListener('click', () => {
+        wsRunner.close()
+    });
+
+    // post
+
+    html.post.addEventListener('click', () => { 
+        postToAPI(packet)
+    });
+
+    // init
+
+    const loadAssets = async () => {
+        await new Promise((res, rej) => { setTimeout(res, 2000) });
+    };
 
     window.addEventListener('load', async () => { 
+        
+        wsBtn.forEach(btn => btn.disabled = true);
+        
         await loadAssets();
-        start();
+
+        wsBtn.forEach(btn => btn.disabled = false);
     });
 
 </script>

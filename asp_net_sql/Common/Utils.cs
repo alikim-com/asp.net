@@ -46,6 +46,9 @@ public class Utl
         );
 }
 
+/// <summary>
+/// CRUD operations
+/// </summary>
 public enum ResType
 {
     None,
@@ -93,32 +96,43 @@ public class Result
             outp += $"\t[{k}]\n";
             foreach(var val in lst) outp += $"\t\t{val}\n";
         }
-
+        
         return outp;
     }
 }
 
-public enum APICmd
+/// <summary>
+/// API & Websocket commands
+/// </summary>
+public enum PackCmd
 {
     None,
     Test,
     StartEngine,
-    StopEngine
+    StopEngine,
+    Update,
 }
 
-public class APIPacket : Result
+public enum PackStat
+{
+    None,
+    Success,
+    Fail,
+}
+
+public class Packet : Result
 {
     public Dictionary<string, string>? keyValuePairs;
-    public string? status;
+    public PackStat status;
     public string? message;
-    public APICmd? command;
-    public Guid? guid;
+    public PackCmd command;
+    public Guid guid;
 
-    public APIPacket(
+    public Packet(
         Dictionary<string, string>? _keyValuePairs = null,
-        string? _status = null,
         string? _message = null,
-        APICmd _command = APICmd.None,
+        PackStat _status = PackStat.None,
+        PackCmd _command = PackCmd.None,
         Guid? _guid = null)
     {
         keyValuePairs = _keyValuePairs;
@@ -131,7 +145,7 @@ public class APIPacket : Result
     /// <summary>
     /// For JsonSerializer.Deserialize
     /// </summary>
-    public APIPacket() { }
+    public Packet() { }
 
     public override string ToString()
     {
@@ -167,7 +181,7 @@ class Post
     public static void Context(
             HttpRequest req,
             string url,
-            APIPacket data,
+            Packet data,
             out string apiEndpoint,
             out HttpClient client,
             out HttpContent content,

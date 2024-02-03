@@ -20,18 +20,18 @@ public class API_CB : PageModel
 
         string reqBody = await reader.ReadToEndAsync();
 
-        var resp = new APIPacket();
+        var resp = new Packet();
 
         try
         {
-            var postData = JsonSerializer.Deserialize<APIPacket>
+            var postData = JsonSerializer.Deserialize<Packet>
                 (reqBody, Post.includeFields) ?? throw new Exception
                     ($"API.OnPostAsync : postData is null");
 
             switch(postData.command)
             {
-                case APICmd.Test:
-                    resp.status = "success";
+                case PackCmd.Test:
+                    resp.status = PackStat.Success;
                     resp.message = "received packet";
                     resp.command = postData.command;
                     resp.keyValuePairs = postData.keyValuePairs;
@@ -45,7 +45,7 @@ public class API_CB : PageModel
         }
         catch (Exception ex)
         {
-            resp.status = "error";
+            resp.status = PackStat.Fail;
             resp.message = "exception";
             resp.info["info"] = [];
             resp.AddExeptionInfo("info", ex);

@@ -12,14 +12,14 @@ public class APIPostTest_CB : PageModel
 {
     public async Task OnGetAsync()
     {
-        var packet = new APIPacket(
+        var packet = new Packet(
             new() {
                 { "key1", "value1" },
                 { "key2", "value2" }
             },
-            "status",
             "message",
-            APICmd.Test
+            PackStat.None,
+            PackCmd.Test
             );
 
         //Debug.WriteLine(packet);
@@ -51,7 +51,7 @@ public class APIPostTest_CB : PageModel
 
             if (responseBody != null)
             {
-                APIPacket? resp = JsonSerializer.Deserialize<APIPacket>
+                Packet? resp = JsonSerializer.Deserialize<Packet>
                     (responseBody, Post.includeFields);
 
                 if(resp != null)

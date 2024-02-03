@@ -26,6 +26,7 @@ button {
     border: 1px solid rgba(255, 255, 255, 0.25);
     background-color: rgba(255, 255, 255, 0.1);
     color: #999;
+    margin: 0px 3px 0px 3px;
     padding: 3px 8px 6px 8px;
     cursor: pointer;
 }
@@ -37,7 +38,7 @@ button {
         "header header header"
         "left middle right" 1fr
         "footer footer footer"
-        / 100px 1fr 100px
+        / 200px 1fr 300px
 }
 
 .header {
