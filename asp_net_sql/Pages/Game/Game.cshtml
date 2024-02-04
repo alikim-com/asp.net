@@ -20,7 +20,7 @@
     <div class="header">1</div>
     <div class="left">
         @await Html.PartialAsync("_InfoPartial")
-        <div id="LeftLog"></div>
+        <div id="LeftLog" class="font10"></div>
     </div>
     <div class="middle">
         <div class="aspect game_container">
@@ -45,7 +45,9 @@
         </div>
     </div>
     <div class="right">
-        <div id="RightLog"></div>
+        <div id="RightLog">
+            <div id="wsRunners"></div>
+        </div>
     </div>
     <div class="footer">5</div>
 </div>
@@ -63,6 +65,15 @@
         const html = {};
         document.querySelectorAll('*[id]').forEach(e => html[e.id] = e);
         return html;
+    };
+
+    const dictToString = dict => {
+        let outp = '';
+        for (const [key, val] of Object.entries(dict)) {
+            outp += 
+            `<div class="font12">${key}</div><div class="font10">${val}</div>`;
+        }
+        return outp;
     };
 
     const url = '@ViewData["baseURI"]';
@@ -126,10 +137,10 @@
                 obj.host,
                 obj.port,
                 obj.path,
-                obj.onOpen = null,
-                obj.onMessage = null,
-                obj.onError = null,
-                obj.onClose = null,
+                obj.onOpen,
+                obj.onMessage,
+                obj.onError,
+                obj.onClose,
             );
         };
 
@@ -172,9 +183,22 @@
 
     const wsRunner = new WSRunner();
 
+    const updateRunners = dict => { 
+        html.wsRunners.innerHTML = dictToString(dict);
+    };
+
     const onWsMessage = evt => {
-        const packet = JsonToPacket(evt.data); // , PRINT SOCK NAME
-        log(packet);
+
+        const packet = JsonToPacket(evt.data);
+
+        const cmd = packet.command;
+        switch (cmd) {
+        case enmPackCmd.Update:
+            updateRunners(packet.keyValuePairs);
+            break;
+        default:
+            break;
+        }
     };
 
     html.wsopen.addEventListener('click', () => { 

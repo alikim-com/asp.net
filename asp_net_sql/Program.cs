@@ -3,6 +3,7 @@ using System.Net.WebSockets;
 //
 using asp_net_sql.Data;
 using asp_net_sql.Common;
+using System.Diagnostics;
 
 namespace asp_net_sql;
 
@@ -56,9 +57,13 @@ public class Program
 
                 var tcs = new TaskCompletionSource<object>();
 
-                WebSockHub.Add(webSocket, tcs);
+                var _guid = WebSockHub.Add(webSocket, tcs);
+
+                Debug.WriteLine($"{_guid.ShortStr()} wsRunner added");
 
                 await tcs.Task;
+
+                Debug.WriteLine($"{_guid.ShortStr()} wsRunner TCS released");
 
             } else
             {

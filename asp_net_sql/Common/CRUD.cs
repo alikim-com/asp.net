@@ -121,7 +121,7 @@ public class CRUD<T>(
             if(ca == CrudAction.Update && item != null) 
                 UpdateDbSet(item, oldProps);
 
-            result.AddExeptionInfo(infKey, ex);
+            result.AddExInfo(ex, infKey);
         }
 
         return result;

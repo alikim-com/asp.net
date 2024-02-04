@@ -13,13 +13,13 @@ public class APIPostTest_CB : PageModel
     public async Task OnGetAsync()
     {
         var packet = new Packet(
+            PackStat.None,
+            PackCmd.Test,
             new() {
                 { "key1", "value1" },
                 { "key2", "value2" }
             },
-            "message",
-            PackStat.None,
-            PackCmd.Test
+            "message"
             );
 
         //Debug.WriteLine(packet);

@@ -11,13 +11,15 @@ public class WebSockHub
 {
     static public readonly List<WebSockRunner> wsRunners = [];
 
-    public static void Add(WebSocket _webSocket, TCS _tcs)
+    public static Guid Add(WebSocket _webSocket, TCS _tcs)
     {
         var _guid = Guid.NewGuid();
         var rnr = new WebSockRunner(_webSocket, _tcs, _guid);
         wsRunners.Add(rnr);
         rnr.OpenLoop();
         UpdateRunners();
+
+        return _guid;
     }
 
     public static void Remove(WebSockRunner wsRunner)
@@ -33,10 +35,10 @@ public class WebSockHub
             dict.Add(rnr.name, rnr.Tcs.Task.Status.ToString());
 
         var packet = new Packet(
-                dict,
-                "wsRunners",
-                PackStat.None,
-                PackCmd.Update);
+            PackStat.None,
+            PackCmd.Update,  
+            dict,
+            "wsRunners");
 
         foreach (var rnr in wsRunners) 
             rnr.SendUpdate(packet);
@@ -51,8 +53,8 @@ public class WebSockRunner(
 {
     readonly WebSocket socket = _socket;
     public TCS Tcs { get; } = _tcs;
-    Guid guid = _guid;
-    public readonly string name = _guid.ToString()[..4];
+    readonly Guid guid = _guid;
+    public readonly string name = _guid.ShortStr();
     readonly byte[] buffer = new byte[bufferSize];
 
     public void SendUpdate(Packet packet) => Send(packet);
@@ -109,9 +111,8 @@ public class WebSockRunner(
                 catch (Exception ex)
                 {
                     resp.status = PackStat.Fail;
-                    resp.message = "exception";
-                    resp.info["info"] = [];
-                    resp.AddExeptionInfo("info", ex);
+                    resp.message = $"wsRunner<{name}>.OpenLoop";
+                    resp.AddExInfo(ex);
                 }
 
                 Send(resp);
@@ -119,7 +120,7 @@ public class WebSockRunner(
 
         } while (!res.CloseStatus.HasValue);
 
-        await socket.CloseAsync(
+        await socket.CloseAsync( // CHECK IF WORKS WHEN TAB IS CLOSED
             res.CloseStatus.Value,
             res.CloseStatusDescription,
             CancellationToken.None);

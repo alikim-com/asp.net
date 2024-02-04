@@ -13,13 +13,13 @@ body {
     padding: 0;
     color: #999;
     background-color: #112233;
+    font-size: 14px;
 }
 
 div {
     margin: 1px;
     background: rgba(255, 0, 255, 0.035);
     font-family: "Ubuntu Mono", Consolas, "Lucida Console", "Courier New", "SF Mono", Monaco, monospace;
-    font-size: 14px;
 }
 
 button {
@@ -137,4 +137,12 @@ button {
 .ctaDisabled {
     pointer-events: none;
     cursor: not-allowed;
+}
+
+.font12 {
+    font-size: 12px;
+}
+
+.font10 {
+    font-size: 10px;
 }

@@ -11,6 +11,11 @@ public static class G
     public static readonly string NL = Environment.NewLine;
 }
 
+public static class GuidExtenstions
+{
+    public static string ShortStr(this Guid guid) => guid.ToString()[..8];
+}
+
 public static class StringExtensions
 {
     public static string Capitalise(this string input) => string.IsNullOrEmpty(input) ?
@@ -38,12 +43,17 @@ public static class EnumExtensions
 public class Utl
 {
     public static string DictToString<TKey, TValue>(
-        Dictionary<TKey, TValue> dict,
+        Dictionary<TKey, TValue>? dict,
         string? sep = null) where TKey : notnull =>
         string.Join(
             sep ?? Environment.NewLine,
-            dict.Select(kvp => $"Key: {kvp.Key}, Value: {kvp.Value}")
+            dict == null ? 
+            "" : dict.Select(kvp => $"Key: {kvp.Key}, Value: {kvp.Value}")
         );
+
+    public static List<string> ExInfo(Exception ex) => [
+        ex.Message,
+        ex.InnerException != null ? ex.InnerException.Message : ""];
 }
 
 /// <summary>
@@ -79,13 +89,8 @@ public class Result
         { { singleKey, [singleVal] } };
     }
 
-    public void AddExeptionInfo(string key, Exception ex)
-    {
-        type = ResType.Error;
-        info[key].Add("Exception: " + ex.Message);
-        if (ex.InnerException != null)
-            info[key].Add("Inner exception: " + ex.InnerException.Message);
-    }
+    public void AddExInfo(Exception ex, string key = "exception") => 
+        info[key] = Utl.ExInfo(ex);
 
     public override string ToString()
     {
@@ -120,25 +125,28 @@ public enum PackStat
     Fail,
 }
 
-public class Packet : Result
+public class Packet
 {
-    public Dictionary<string, string>? keyValuePairs;
     public PackStat status;
-    public string? message;
     public PackCmd command;
+    public Dictionary<string, string>? keyValuePairs;
+    public string? message;
+    public Result? crud;
     public Guid guid;
 
     public Packet(
-        Dictionary<string, string>? _keyValuePairs = null,
-        string? _message = null,
         PackStat _status = PackStat.None,
         PackCmd _command = PackCmd.None,
+        Dictionary<string, string>? _keyValuePairs = null,
+        string? _message = null,
+        Result? _crud = null,
         Guid? _guid = null)
     {
-        keyValuePairs = _keyValuePairs;
         status = _status;
-        message = _message;
         command = _command;
+        keyValuePairs = _keyValuePairs;
+        message = _message;
+        crud = _crud;
         guid = _guid ?? Guid.NewGuid();
     }
 
@@ -147,25 +155,30 @@ public class Packet : Result
     /// </summary>
     public Packet() { }
 
+    public void AddExInfo(Exception ex, string key = "exception")
+    {
+        var exlist = string.Join("\n", Utl.ExInfo(ex));
+        keyValuePairs ??= [];
+        keyValuePairs.Add(key, exlist);
+    }
+
     public override string ToString()
     {
         string outp = $"""
-            guid:
-                {guid}
-            command:
-                {command}
             status:
                 {status}
+            command:
+                {command}
             message:
                 {message}
+            key-values:
+                {Utl.DictToString(keyValuePairs)}
+            crud:
+                {crud}
+            guid:
+                {guid}
 
             """;
-
-        outp += "pairs:\n";
-        if (keyValuePairs != null)
-            foreach (var (k, v) in keyValuePairs) outp += $"\t{k}: {v}\n";
-        
-        outp += "result->\n" + base.ToString();
 
         return outp;
     }

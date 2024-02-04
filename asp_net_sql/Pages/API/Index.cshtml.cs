@@ -46,9 +46,8 @@ public class API_CB : PageModel
         catch (Exception ex)
         {
             resp.status = PackStat.Fail;
-            resp.message = "exception";
-            resp.info["info"] = [];
-            resp.AddExeptionInfo("info", ex);
+            resp.message = "API_CB.OnPostAsync";
+            resp.AddExInfo(ex);
         }
 
         return new JsonResult(resp, Post.includeFields)
