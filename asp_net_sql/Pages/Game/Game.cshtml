@@ -20,7 +20,7 @@
     <div class="header">1</div>
     <div class="left">
         @await Html.PartialAsync("_InfoPartial")
-        <div id="LeftLog" class="font10"></div>
+        <div id="LeftLog" class="nobg font10"></div>
     </div>
     <div class="middle">
         <div class="aspect game_container">
@@ -45,7 +45,7 @@
         </div>
     </div>
     <div class="right">
-        <div id="RightLog">
+        <div id="RightLog" class="nobg">
             <div id="wsRunners"></div>
         </div>
     </div>
@@ -67,11 +67,12 @@
         return html;
     };
 
-    const dictToString = dict => {
+    const dictToString = (selfKey, dict) => {
         let outp = '';
         for (const [key, val] of Object.entries(dict)) {
+            const self = key == selfKey ? ' wsSelf' : '';
             outp += 
-            `<div class="font12">${key}</div><div class="font10">${val}</div>`;
+            `<div class="font12${self}">${key}</div><div class="font10">${val}</div>`;
         }
         return outp;
     };
@@ -123,6 +124,10 @@
             .catch(e => { err('Received error: ' + e) });
     };
 
+    const htmlUpdateRunners = (name, wsList) => {
+        html.wsRunners.innerHTML = dictToString(name, wsList);
+    };
+
     function WSRunner() 
     { 
         this.open = obj => {
@@ -142,9 +147,18 @@
                 obj.onError,
                 obj.onClose,
             );
+
+            html.wsopen.lockBtn();
+            html.wssend.unlockBtn();
+            html.wsclose.unlockBtn();
         };
 
-        this.send = data => { 
+        this.send = data => {
+
+            if (!this.socket) {
+                log("socket doesn't exist");
+                return;
+            }
 
             const jsonData = JSON.stringify(data);
 
@@ -153,16 +167,47 @@
             this.socket.send(jsonData);
         };
 
-        this.close = () => { 
-            this.socket.close(); // CHECK PARAMS
+        this.close = (code = 1000, reason = 'normal client closure') => { // custom code 3000-4999
+
+            if (!this.socket) {
+                log("socket doesn't exist");
+                return;
+            }
+
+            this.socket.close(code, reason);
             this.socket = null;
+
+            html.wsopen.unlockBtn();
+            html.wssend.lockBtn();
+            html.wsclose.lockBtn();
         };
 
+        let _name = '';
+        let _wsList = {};
+
+        WSRunner.prototype.updateRunners = function (wsList) {
+            _wsList = wsList;
+            htmlUpdateRunners(_name, _wsList);
+        };
+        
+        WSRunner.prototype.updateSelf = function (wsSelf) {
+            const [k, v] = Object.entries(wsSelf)[0];
+            _name = k;
+            _wsList[k] = v;
+            htmlUpdateRunners(_name, _wsList);
+        };
     }
 
     const html = getHTML();
 
     const wsBtn = [html.wsopen, html.wssend, html.wsclose];
+
+    // multi-click protection
+    wsBtn.forEach(btn => {
+        btn.classList.add('switch');
+        btn.lockBtn = () => { btn.disabled = true };
+        btn.unlockBtn = () => { btn.disabled = false };
+    });
 
     // test packet
 
@@ -183,18 +228,18 @@
 
     const wsRunner = new WSRunner();
 
-    const updateRunners = dict => { 
-        html.wsRunners.innerHTML = dictToString(dict);
-    };
-
     const onWsMessage = evt => {
 
         const packet = JsonToPacket(evt.data);
+        const keyvals = packet.keyValuePairs;
 
         const cmd = packet.command;
         switch (cmd) {
         case enmPackCmd.Update:
-            updateRunners(packet.keyValuePairs);
+            wsRunner.updateRunners(keyvals);
+            break;
+        case enmPackCmd.Welcome:
+            wsRunner.updateSelf(keyvals);
             break;
         default:
             break;
@@ -231,13 +276,13 @@
         await new Promise((res, rej) => { setTimeout(res, 2000) });
     };
 
-    window.addEventListener('load', async () => { 
-        
-        wsBtn.forEach(btn => btn.disabled = true);
+    window.addEventListener('DOMContentLoaded', async () => {
+
+        wsBtn.forEach(btn => { btn.lockBtn() });
         
         await loadAssets();
 
-        wsBtn.forEach(btn => btn.disabled = false);
+        html.wsopen.unlockBtn();
     });
 
 </script>

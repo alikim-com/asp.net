@@ -116,6 +116,7 @@ public enum PackCmd
     StartEngine,
     StopEngine,
     Update,
+    Welcome,
 }
 
 public enum PackStat

@@ -17,6 +17,8 @@ public class WebSockHub
         var rnr = new WebSockRunner(_webSocket, _tcs, _guid);
         wsRunners.Add(rnr);
         rnr.OpenLoop();
+
+        WelcomeRunner(rnr);
         UpdateRunners();
 
         return _guid;
@@ -26,6 +28,20 @@ public class WebSockHub
     {
         wsRunners.Remove(wsRunner);
         UpdateRunners();
+    }
+
+    static void WelcomeRunner(WebSockRunner wsRunner)
+    {
+        Dictionary<string, string> dict = new() { 
+            { wsRunner.name, wsRunner.Tcs.Task.Status.ToString() } };
+
+        var packet = new Packet(
+            PackStat.None,
+            PackCmd.Welcome,
+            dict,
+            "");
+
+        wsRunner.SendWelcome(packet);
     }
 
     static void UpdateRunners()
@@ -57,6 +73,7 @@ public class WebSockRunner(
     public readonly string name = _guid.ShortStr();
     readonly byte[] buffer = new byte[bufferSize];
 
+    public void SendWelcome(Packet packet) => Send(packet);
     public void SendUpdate(Packet packet) => Send(packet);
 
     async void Send(Packet packet)
