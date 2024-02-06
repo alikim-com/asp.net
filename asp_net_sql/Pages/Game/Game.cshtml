@@ -129,7 +129,26 @@
     };
 
     function WSRunner() 
-    { 
+    {
+        WSRunner.prototype.onWsMessage = function(evt) {
+
+            const packet = JsonToPacket(evt.data);
+            const keyvals = packet.keyValuePairs;
+            
+            const cmd = packet.command;
+            switch (cmd) {
+                case enmPackCmd.Update:
+                    this.updateRunners(keyvals);
+                    break;
+                case enmPackCmd.Welcome:
+                    this.updateSelf(keyvals);
+                    break;
+                default:
+                    log(packet);
+                    break;
+            }
+        };
+
         this.open = obj => {
 
             if (this.socket) {
@@ -143,7 +162,7 @@
                 obj.port,
                 obj.path,
                 obj.onOpen,
-                obj.onMessage,
+                obj.onMessage ?? this.onWsMessage.bind(this),
                 obj.onError,
                 obj.onClose,
             );
@@ -191,9 +210,15 @@
         };
         
         WSRunner.prototype.updateSelf = function (wsSelf) {
-            const [k, v] = Object.entries(wsSelf)[0];
-            _name = k;
-            _wsList[k] = v;
+            if (!wsSelf) {
+                _name = '';
+                Object.keys(_wsList)
+                    .forEach(k => _wsList[k] = 'client: conn closed');
+            } else {
+                const [k, v] = Object.entries(wsSelf)[0];
+                _name = k;
+                _wsList[k] = v;
+            }
             htmlUpdateRunners(_name, _wsList);
         };
     }
@@ -228,23 +253,7 @@
 
     const wsRunner = new WSRunner();
 
-    const onWsMessage = evt => {
-
-        const packet = JsonToPacket(evt.data);
-        const keyvals = packet.keyValuePairs;
-
-        const cmd = packet.command;
-        switch (cmd) {
-        case enmPackCmd.Update:
-            wsRunner.updateRunners(keyvals);
-            break;
-        case enmPackCmd.Welcome:
-            wsRunner.updateSelf(keyvals);
-            break;
-        default:
-            break;
-        }
-    };
+    // test buttons
 
     html.wsopen.addEventListener('click', () => { 
         wsRunner.open({
@@ -252,7 +261,6 @@
             host: 'localhost',
             port: '7170',
             path: 'ws',
-            onMessage: onWsMessage,
         });
     });
 
@@ -261,7 +269,8 @@
     });
 
     html.wsclose.addEventListener('click', () => {
-        wsRunner.close()
+        wsRunner.close();
+        wsRunner.updateSelf(null);
     });
 
     // post

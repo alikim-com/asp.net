@@ -157,10 +157,11 @@ button {
     opacity: 0.5;
 }
 
-.nobg {
+.nobg, .nobg * {
     background: none;
 }
 
 .wsSelf {
     font-weight: bold;
+    color: #00CCCC;
 }

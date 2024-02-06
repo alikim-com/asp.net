@@ -33,7 +33,8 @@ public class WebSockHub
     static void WelcomeRunner(WebSockRunner wsRunner)
     {
         Dictionary<string, string> dict = new() { 
-            { wsRunner.name, wsRunner.Tcs.Task.Status.ToString() } };
+            { wsRunner.name, "server: connected" } };
+            // { wsRunner.name, wsRunner.Tcs.Task.Status.ToString() } };
 
         var packet = new Packet(
             PackStat.None,
@@ -48,7 +49,7 @@ public class WebSockHub
     {
         Dictionary<string, string> dict = [];
         foreach (var rnr in wsRunners)
-            dict.Add(rnr.name, rnr.Tcs.Task.Status.ToString());
+            dict.Add(rnr.name, "server: connected");
 
         var packet = new Packet(
             PackStat.None,
